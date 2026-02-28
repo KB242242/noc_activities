@@ -9262,28 +9262,22 @@ export default function NOCActivityApp() {
                     onChange={(e) => setToInput(e.target.value)}
                     onFocus={() => setShowSuggestions('to')}
                     className="flex-1 outline-none text-sm bg-transparent min-w-[150px]"
-                    placeholder={newEmail.to.length === 0 ? "" : ""}
+                    placeholder=""
                   />
                 </div>
+                <button 
+                  onClick={() => setShowCc(!showCc)}
+                  className={`text-sm px-2 py-1 rounded ${showCc ? 'text-blue-700 bg-blue-50' : 'text-blue-600 hover:bg-blue-50'}`}
+                >
+                  Cc
+                </button>
+                <button 
+                  onClick={() => setShowBcc(!showBcc)}
+                  className={`text-sm px-2 py-1 rounded ${showBcc ? 'text-blue-700 bg-blue-50' : 'text-blue-600 hover:bg-blue-50'}`}
+                >
+                  Cci
+                </button>
               </div>
-              
-              {/* Cc/Bcc toggle */}
-              {(showCc || showBcc) && (
-                <div className="flex items-center gap-4 px-4 py-1 text-xs">
-                  <button 
-                    onClick={() => setShowCc(!showCc)}
-                    className={`text-blue-600 hover:underline ${showCc ? 'font-medium' : ''}`}
-                  >
-                    Cc
-                  </button>
-                  <button 
-                    onClick={() => setShowBcc(!showBcc)}
-                    className={`text-blue-600 hover:underline ${showBcc ? 'font-medium' : ''}`}
-                  >
-                    Cci
-                  </button>
-                </div>
-              )}
               
               {/* Cc field */}
               {showCc && (
