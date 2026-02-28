@@ -42,7 +42,7 @@ import {
   Volume2, VolumeX, Smile, Image as ImageIcon, Film, File, MoreVertical, PhoneOff, UserPlus,
   Hash, AtSign, Pin, Archive, BellOff, Check, RotateCcw, Reply, Forward, Megaphone, Heart, Eye as EyeIcon,
   CheckSquare, Bold, Italic, Underline, Link as LinkIcon, List, ListOrdered, Type, AlignLeft, AlignCenter, AlignRight, Paperclip as AttachIcon, Square, UserX,
-  Minus, Maximize2, Minimize2, Highlighter, Tag, Toggle
+  Minus, Maximize2, Minimize2, Highlighter, Tag
 } from 'lucide-react';
 import EmojiPicker, { Theme as EmojiPickerTheme, EmojiClickData } from 'emoji-picker-react';
 
