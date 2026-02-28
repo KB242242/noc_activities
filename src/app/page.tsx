@@ -1509,6 +1509,34 @@ export default function NOCActivityApp() {
     highlightColor: '#ffffff',
     align: 'left' as 'left' | 'center' | 'right'
   });
+  
+  // Rich Text Editor States
+  const editorRef = useRef<HTMLDivElement | null>(null);
+  const [editorFontFamily, setEditorFontFamily] = useState('Arial');
+  const [editorFontSize, setEditorFontSize] = useState('3');
+  const [editorTextColor, setEditorTextColor] = useState('#000000');
+  const [editorHighlightColor, setEditorHighlightColor] = useState('#ffffff');
+  const [editorFormats, setEditorFormats] = useState({
+    bold: false,
+    italic: false,
+    underline: false
+  });
+  const [linkUrl, setLinkUrl] = useState('');
+  
+  // Format text function
+  const formatText = (command: string, value?: string) => {
+    document.execCommand(command, false, value);
+    if (editorRef.current) {
+      editorRef.current.focus();
+    }
+    // Update format states
+    setEditorFormats({
+      bold: document.queryCommandState('bold'),
+      italic: document.queryCommandState('italic'),
+      underline: document.queryCommandState('underline')
+    });
+  };
+  
   const [emailNotifications, setEmailNotifications] = useState({
     soundEnabled: true,
     browserNotifications: false,
@@ -9187,30 +9215,41 @@ export default function NOCActivityApp() {
           </Dialog>
         )}
 
-        {/* Dialog Composition Email - Style Gmail */}
+        {/* Dialog Composition Email - Style Gmail Exact */}
         <Dialog open={composeOpen} onOpenChange={setComposeOpen}>
-          <DialogContent className="sm:max-w-[700px] p-0 gap-0">
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 bg-slate-100 dark:bg-slate-800 rounded-t-lg">
-              <h3 className="font-medium">Nouveau message</h3>
+          <DialogContent className="sm:max-w-[600px] p-0 gap-0 overflow-hidden">
+            {/* Header - Style Gmail */}
+            <div className="flex items-center justify-between px-4 py-2 bg-[#404040] text-white">
+              <h3 className="font-medium text-sm">Nouveau message</h3>
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <Paperclip className="w-4 h-4" />
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-white hover:bg-white/10">
+                  <Minimize2 className="w-4 h-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setComposeOpen(false)}>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-white hover:bg-white/10">
+                  <Maximize2 className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-white hover:bg-white/10" onClick={() => setComposeOpen(false)}>
                   <X className="w-4 h-4" />
                 </Button>
               </div>
             </div>
             
-            {/* Form */}
-            <div className="p-4 space-y-3">
+            {/* Form Container with scroll */}
+            <div className="max-h-[400px] overflow-y-auto">
               {/* To field */}
-              <div className="flex items-center border-b pb-2">
-                <span className="text-sm text-slate-500 w-12">À:</span>
-                <div className="flex-1 flex flex-wrap gap-1">
+              <div className="flex items-center px-4 py-2 border-b min-h-[40px]">
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <span>De:</span>
+                  <span className="text-gray-700 dark:text-gray-300">{user?.email || 'moi@siliconeconnect.com'}</span>
+                </div>
+              </div>
+              
+              {/* To field */}
+              <div className="flex items-center px-4 py-2 border-b min-h-[40px]">
+                <span className="text-sm text-gray-500 w-8">À:</span>
+                <div className="flex-1 flex flex-wrap items-center gap-1">
                   {newEmail.to.map((recipient, index) => (
-                    <span key={index} className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm">
+                    <span key={index} className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-sm">
                       {recipient.name}
                       <button onClick={() => setNewEmail(prev => ({...prev, to: prev.to.filter((_, i) => i !== index)}))}>
                         <X className="w-3 h-3" />
@@ -9222,62 +9261,37 @@ export default function NOCActivityApp() {
                     value={toInput}
                     onChange={(e) => setToInput(e.target.value)}
                     onFocus={() => setShowSuggestions('to')}
-                    className="flex-1 outline-none text-sm bg-transparent"
-                    placeholder={newEmail.to.length === 0 ? "Rechercher un destinataire..." : ""}
+                    className="flex-1 outline-none text-sm bg-transparent min-w-[150px]"
+                    placeholder={newEmail.to.length === 0 ? "" : ""}
                   />
                 </div>
-                <button 
-                  onClick={() => setShowCc(!showCc)}
-                  className="text-sm text-blue-600 hover:underline ml-2"
-                >
-                  Cc
-                </button>
               </div>
               
-              {/* Suggestions */}
-              {showSuggestions && toInput && (
-                <div className="border rounded-lg bg-white dark:bg-slate-900 shadow-lg max-h-40 overflow-auto">
-                  {Object.values(DEMO_USERS)
-                    .filter(u => 
-                      u.name.toLowerCase().includes(toInput.toLowerCase()) ||
-                      u.email.toLowerCase().includes(toInput.toLowerCase())
-                    )
-                    .filter(u => !newEmail.to.some(t => t.id === u.id))
-                    .slice(0, 5)
-                    .map((u) => (
-                      <button
-                        key={u.id}
-                        onClick={() => {
-                          setNewEmail(prev => ({
-                            ...prev,
-                            to: [...prev.to, { id: u.id, name: u.name, email: u.email }]
-                          }));
-                          setToInput('');
-                          setShowSuggestions(null);
-                        }}
-                        className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-left"
-                      >
-                        <Avatar className="w-6 h-6">
-                          <AvatarFallback className="text-xs bg-blue-600 text-white">
-                            {u.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="text-sm font-medium">{u.name}</div>
-                          <div className="text-xs text-slate-500">{u.email}</div>
-                        </div>
-                      </button>
-                    ))}
+              {/* Cc/Bcc toggle */}
+              {(showCc || showBcc) && (
+                <div className="flex items-center gap-4 px-4 py-1 text-xs">
+                  <button 
+                    onClick={() => setShowCc(!showCc)}
+                    className={`text-blue-600 hover:underline ${showCc ? 'font-medium' : ''}`}
+                  >
+                    Cc
+                  </button>
+                  <button 
+                    onClick={() => setShowBcc(!showBcc)}
+                    className={`text-blue-600 hover:underline ${showBcc ? 'font-medium' : ''}`}
+                  >
+                    Cci
+                  </button>
                 </div>
               )}
               
               {/* Cc field */}
               {showCc && (
-                <div className="flex items-center border-b pb-2">
-                  <span className="text-sm text-slate-500 w-12">Cc:</span>
-                  <div className="flex-1 flex flex-wrap gap-1">
+                <div className="flex items-center px-4 py-2 border-b min-h-[40px]">
+                  <span className="text-sm text-gray-500 w-8">Cc:</span>
+                  <div className="flex-1 flex flex-wrap items-center gap-1">
                     {newEmail.cc.map((recipient, index) => (
-                      <span key={index} className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm">
+                      <span key={index} className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-sm">
                         {recipient.name}
                         <button onClick={() => setNewEmail(prev => ({...prev, cc: prev.cc.filter((_, i) => i !== index)}))}>
                           <X className="w-3 h-3" />
@@ -9288,197 +9302,491 @@ export default function NOCActivityApp() {
                       type="text"
                       value={ccInput}
                       onChange={(e) => setCcInput(e.target.value)}
-                      onFocus={() => setShowSuggestions('cc')}
-                      className="flex-1 outline-none text-sm bg-transparent"
-                      placeholder={newEmail.cc.length === 0 ? "Ajouter Cc..." : ""}
+                      className="flex-1 outline-none text-sm bg-transparent min-w-[150px]"
+                      placeholder=""
+                    />
+                  </div>
+                </div>
+              )}
+              
+              {/* Bcc (Cci) field */}
+              {showBcc && (
+                <div className="flex items-center px-4 py-2 border-b min-h-[40px]">
+                  <span className="text-sm text-gray-500 w-8">Cci:</span>
+                  <div className="flex-1 flex flex-wrap items-center gap-1">
+                    {newEmail.bcc.map((recipient, index) => (
+                      <span key={index} className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-sm">
+                        {recipient.name}
+                        <button onClick={() => setNewEmail(prev => ({...prev, bcc: prev.bcc.filter((_, i) => i !== index)}))}>
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                    <input
+                      type="text"
+                      value={bccInput}
+                      onChange={(e) => setBccInput(e.target.value)}
+                      className="flex-1 outline-none text-sm bg-transparent min-w-[150px]"
+                      placeholder=""
                     />
                   </div>
                 </div>
               )}
               
               {/* Subject */}
-              <div className="flex items-center border-b pb-2">
-                <span className="text-sm text-slate-500 w-12">Objet:</span>
+              <div className="flex items-center px-4 py-2 border-b min-h-[40px]">
+                <span className="text-sm text-gray-500 w-16">Objet:</span>
                 <input
                   type="text"
                   value={newEmail.subject}
                   onChange={(e) => setNewEmail(prev => ({...prev, subject: e.target.value}))}
                   className="flex-1 outline-none text-sm bg-transparent"
-                  placeholder="Objet du message"
+                  placeholder="(sans objet)"
                 />
               </div>
               
-              {/* Body */}
-              <Textarea
-                value={newEmail.body}
-                onChange={(e) => setNewEmail(prev => ({...prev, body: e.target.value}))}
-                className="min-h-[200px] border-0 resize-none focus-visible:ring-0"
-                placeholder="Écrivez votre message..."
+              {/* Rich Text Editor Toolbar */}
+              <div className="flex items-center gap-0.5 px-4 py-1 border-b bg-gray-50 dark:bg-gray-900 flex-wrap">
+                {/* Font Family */}
+                <Select value={editorFontFamily} onValueChange={setEditorFontFamily}>
+                  <SelectTrigger className="h-7 w-24 text-xs border-0 bg-transparent">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Arial">Arial</SelectItem>
+                    <SelectItem value="Georgia">Georgia</SelectItem>
+                    <SelectItem value="Times New Roman">Times</SelectItem>
+                    <SelectItem value="Courier New">Courier</SelectItem>
+                    <SelectItem value="Verdana">Verdana</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                {/* Font Size */}
+                <Select value={editorFontSize} onValueChange={setEditorFontSize}>
+                  <SelectTrigger className="h-7 w-16 text-xs border-0 bg-transparent">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">Petit</SelectItem>
+                    <SelectItem value="3">Normal</SelectItem>
+                    <SelectItem value="5">Grand</SelectItem>
+                    <SelectItem value="7">Très grand</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
+                
+                {/* Bold */}
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className={`h-7 w-7 p-0 ${editorFormats.bold ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
+                  onClick={() => formatText('bold')}
+                >
+                  <Bold className="w-4 h-4" />
+                </Button>
+                
+                {/* Italic */}
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className={`h-7 w-7 p-0 ${editorFormats.italic ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
+                  onClick={() => formatText('italic')}
+                >
+                  <Italic className="w-4 h-4" />
+                </Button>
+                
+                {/* Underline */}
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className={`h-7 w-7 p-0 ${editorFormats.underline ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
+                  onClick={() => formatText('underline')}
+                >
+                  <Underline className="w-4 h-4" />
+                </Button>
+                
+                <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
+                
+                {/* Text Color */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                      <div className="flex flex-col items-center">
+                        <span className="text-[10px] font-bold">A</span>
+                        <div className="w-4 h-1 rounded" style={{ backgroundColor: editorTextColor }} />
+                      </div>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-48 p-2">
+                    <div className="grid grid-cols-8 gap-1">
+                      {['#000000', '#434343', '#666666', '#999999', '#b7b7b7', '#cccccc', '#d9d9d9', '#efefef',
+                        '#980000', '#ff0000', '#ff9900', '#ffff00', '#00ff00', '#00ffff', '#4a86e8', '#0000ff',
+                        '#9900ff', '#ff00ff', '#e6b8af', '#f4cccc', '#fce5cd', '#fff2cc', '#d9ead3', '#d0e0e3',
+                        '#c9daf8', '#cfe2f3', '#d9d2e9', '#ead1dc', '#dd7e6b', '#ea9999', '#f9cb9c', '#ffe599'].map((color) => (
+                        <button
+                          key={color}
+                          className="w-4 h-4 rounded border hover:scale-110 transition-transform"
+                          style={{ backgroundColor: color }}
+                          onClick={() => {
+                            setEditorTextColor(color);
+                            formatText('foreColor', color);
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                
+                {/* Highlight Color */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                      <Highlighter className="w-4 h-4" style={{ color: editorHighlightColor }} />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-48 p-2">
+                    <div className="grid grid-cols-8 gap-1">
+                      {['#ffffff', '#c9daf8', '#fce5cd', '#fff2cc', '#d9ead3', '#d0e0e3', '#e6b8af', '#ead1dc',
+                        '#cfe2f3', '#d9d2e9', '#f4cccc', '#ffe599', '#d9ead3', '#b6d7a8', '#a2c4c9', '#b4a7d6'].map((color) => (
+                        <button
+                          key={color}
+                          className="w-4 h-4 rounded border hover:scale-110 transition-transform"
+                          style={{ backgroundColor: color }}
+                          onClick={() => {
+                            setEditorHighlightColor(color);
+                            formatText('hiliteColor', color);
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                
+                <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
+                
+                {/* Alignment */}
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => formatText('justifyLeft')}>
+                  <AlignLeft className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => formatText('justifyCenter')}>
+                  <AlignCenter className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => formatText('justifyRight')}>
+                  <AlignRight className="w-4 h-4" />
+                </Button>
+                
+                <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
+                
+                {/* Lists */}
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => formatText('insertUnorderedList')}>
+                  <List className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => formatText('insertOrderedList')}>
+                  <ListOrdered className="w-4 h-4" />
+                </Button>
+                
+                <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
+                
+                {/* Link */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                      <LinkIcon className="w-4 h-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 p-2">
+                    <div className="space-y-2">
+                      <Input
+                        placeholder="URL du lien"
+                        value={linkUrl}
+                        onChange={(e) => setLinkUrl(e.target.value)}
+                        className="h-8"
+                      />
+                      <Button size="sm" className="w-full" onClick={() => {
+                        if (linkUrl) {
+                          formatText('createLink', linkUrl);
+                          setLinkUrl('');
+                        }
+                      }}>
+                        Insérer
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                
+                {/* Remove formatting */}
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => formatText('removeFormat')}>
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+              
+              {/* Body - ContentEditable */}
+              <div 
+                ref={editorRef}
+                contentEditable
+                className="min-h-[150px] p-4 outline-none text-sm leading-relaxed overflow-y-auto"
+                style={{ maxHeight: '200px', fontFamily: editorFontFamily }}
+                onInput={(e) => {
+                  setNewEmail(prev => ({...prev, body: e.currentTarget.innerHTML}));
+                }}
+                data-placeholder="Écrivez votre message..."
+                dangerouslySetInnerHTML={{ __html: newEmail.body || '' }}
               />
               
-              {/* Attachments */}
+              {/* Attachments Preview */}
               {newEmail.attachments.length > 0 && (
-                <div className="flex flex-wrap gap-2 pt-2 border-t">
-                  {newEmail.attachments.map((att, index) => (
-                    <div key={index} className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                      <Paperclip className="w-4 h-4 text-slate-500" />
-                      <span className="text-sm">{att.fileName}</span>
-                      <button onClick={() => setNewEmail(prev => ({...prev, attachments: prev.attachments.filter((_, i) => i !== index)}))}>
-                        <X className="w-3 h-3 text-slate-400" />
-                      </button>
-                    </div>
-                  ))}
+                <div className="px-4 py-2 border-t bg-gray-50 dark:bg-gray-900">
+                  <div className="flex flex-wrap gap-2">
+                    {newEmail.attachments.map((att, index) => (
+                      <div key={index} className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-gray-800 rounded-lg border text-sm">
+                        <File className="w-4 h-4 text-blue-500" />
+                        <span className="truncate max-w-[150px]">{att.fileName}</span>
+                        <span className="text-xs text-gray-400">{(att.fileSize / 1024).toFixed(1)}KB</span>
+                        <button 
+                          onClick={() => setNewEmail(prev => ({...prev, attachments: prev.attachments.filter((_, i) => i !== index)}))}
+                          className="text-gray-400 hover:text-red-500"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
             
-            {/* Footer */}
-            <div className="flex items-center justify-between px-4 py-3 border-t bg-slate-50 dark:bg-slate-900/50 rounded-b-lg">
-              <div className="flex items-center gap-2">
-                <Button 
-                  onClick={() => {
-                    if (newEmail.to.length === 0) {
-                      toast.error('Erreur', { description: 'Veuillez ajouter au moins un destinataire' });
-                      return;
-                    }
-                    if (!newEmail.subject.trim()) {
-                      toast.error('Erreur', { description: 'Veuillez ajouter un objet' });
-                      return;
-                    }
-                    
-                    // Create the message
-                    const message: InternalMessage = {
-                      id: generateId(),
-                      from: {
-                        id: user?.id || '',
-                        name: user?.name || '',
-                        email: user?.email || '',
-                        avatar: user?.avatar
-                      },
-                      to: newEmail.to,
-                      cc: newEmail.cc,
-                      subject: newEmail.subject,
-                      body: newEmail.body,
-                      attachments: newEmail.attachments,
-                      folder: 'sent',
-                      status: 'read',
-                      priority: newEmail.priority,
-                      isStarred: false,
-                      isRead: true,
-                      labels: [],
-                      sentAt: new Date(),
-                      createdAt: new Date(),
-                      updatedAt: new Date(),
-                      isDraft: false
-                    };
-                    
-                    // Add to sent folder for sender
-                    setMessages(prev => [message, ...prev]);
-                    
-                    // Simulate delivery to recipients (in real app, this would be server-side)
-                    const deliveredMessage: InternalMessage = {
-                      ...message,
-                      id: generateId(),
-                      folder: 'inbox',
-                      status: 'unread',
-                      isRead: false,
-                      receivedAt: new Date()
-                    };
-                    setMessages(prev => [deliveredMessage, ...prev]);
-                    
-                    // Reset and close
-                    setNewEmail({
-                      to: [],
-                      cc: [],
-                      subject: '',
-                      body: '',
-                      attachments: [],
-                      priority: 'normal',
-                      scheduledAt: null
-                    });
-                    setToInput('');
-                    setCcInput('');
-                    setComposeOpen(false);
-                    
-                    toast.success('Message envoyé', { description: `Envoyé à ${newEmail.to.map(t => t.name).join(', ')}` });
-                  }}
-                  className="gap-2 bg-blue-600 hover:bg-blue-700"
-                >
-                  <Send className="w-4 h-4" /> Envoyer
-                </Button>
-                
-                {/* Attachment upload */}
-                <label className="cursor-pointer">
-                  <input
-                    type="file"
-                    className="hidden"
-                    multiple
-                    onChange={(e) => {
-                      const files = e.target.files;
-                      if (files) {
-                        Array.from(files).forEach(file => {
-                          const reader = new FileReader();
-                          reader.onload = () => {
-                            const attachment: EmailAttachment = {
-                              id: generateId(),
-                              messageId: '',
-                              fileName: file.name,
-                              fileSize: file.size,
-                              fileType: file.type,
-                              fileData: reader.result as string,
-                              uploadedAt: new Date()
-                            };
-                            setNewEmail(prev => ({
-                              ...prev,
-                              attachments: [...prev.attachments, attachment]
-                            }));
-                          };
-                          reader.readAsDataURL(file);
-                        });
-                      }
-                    }}
-                  />
-                  <Button variant="ghost" size="icon" type="button">
-                    <Paperclip className="w-4 h-4" />
-                  </Button>
-                </label>
-              </div>
+            {/* Footer Toolbar - Style Gmail */}
+            <div className="flex items-center gap-1 px-4 py-2 border-t bg-white dark:bg-gray-900">
+              {/* Send Button */}
+              <Button 
+                onClick={() => {
+                  if (newEmail.to.length === 0) {
+                    toast.error('Erreur', { description: 'Veuillez ajouter au moins un destinataire' });
+                    return;
+                  }
+                  
+                  const message: InternalMessage = {
+                    id: generateId(),
+                    from: {
+                      id: user?.id || '',
+                      name: user?.name || '',
+                      email: user?.email || ''
+                    },
+                    to: newEmail.to,
+                    cc: newEmail.cc,
+                    bcc: newEmail.bcc,
+                    subject: newEmail.subject,
+                    body: newEmail.body,
+                    attachments: newEmail.attachments,
+                    folder: 'sent',
+                    status: 'read',
+                    priority: newEmail.priority,
+                    isStarred: false,
+                    isRead: true,
+                    labels: [],
+                    sentAt: new Date(),
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    isDraft: false
+                  };
+                  
+                  setMessages(prev => [message, ...prev]);
+                  
+                  // Reset
+                  setNewEmail({
+                    to: [],
+                    cc: [],
+                    bcc: [],
+                    subject: '',
+                    body: '',
+                    attachments: [],
+                    priority: 'normal',
+                    scheduledAt: null
+                  });
+                  setToInput('');
+                  setCcInput('');
+                  setBccInput('');
+                  if (editorRef.current) {
+                    editorRef.current.innerHTML = '';
+                  }
+                  setComposeOpen(false);
+                  
+                  toast.success('Message envoyé');
+                }}
+                className="gap-1 bg-[#0b57d0] hover:bg-[#0842a0] text-white px-4"
+              >
+                <Send className="w-4 h-4" />
+                <span>Envoyer</span>
+                <ChevronDown className="w-3 h-3 ml-1" />
+              </Button>
               
+              {/* Formatting toggle */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-600 hover:bg-gray-100">
+                    <span className="font-bold underline">A</span>
+                  </Button>
+                </PopoverTrigger>
+              </Popover>
+              
+              {/* Attachment */}
+              <label className="cursor-pointer">
+                <input
+                  type="file"
+                  className="hidden"
+                  multiple
+                  onChange={(e) => {
+                    const files = e.target.files;
+                    if (files) {
+                      Array.from(files).forEach(file => {
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                          const attachment: EmailAttachment = {
+                            id: generateId(),
+                            messageId: '',
+                            fileName: file.name,
+                            fileSize: file.size,
+                            fileType: file.type,
+                            fileData: reader.result as string,
+                            uploadedAt: new Date()
+                          };
+                          setNewEmail(prev => ({
+                            ...prev,
+                            attachments: [...prev.attachments, attachment]
+                          }));
+                        };
+                        reader.readAsDataURL(file);
+                      });
+                    }
+                  }}
+                />
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-600 hover:bg-gray-100" type="button">
+                  <Paperclip className="w-5 h-5" />
+                </Button>
+              </label>
+              
+              {/* Link */}
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-600 hover:bg-gray-100">
+                <LinkIcon className="w-5 h-5" />
+              </Button>
+              
+              {/* Emoji */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-600 hover:bg-gray-100">
+                    <Smile className="w-5 h-5" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-72 p-2">
+                  <div className="grid grid-cols-8 gap-1">
+                    {['😀', '😂', '😍', '🥰', '😎', '🤔', '👍', '👎', '❤️', '🔥', '🎉', '✅', '⏰', '📞', '📧', '💻', '🔧', '📊', '📈', '✨', '🌟', '💪', '🙏', '👋'].map((emoji) => (
+                      <button
+                        key={emoji}
+                        className="text-xl hover:bg-gray-100 rounded p-1"
+                        onClick={() => {
+                          if (editorRef.current) {
+                            editorRef.current.focus();
+                            document.execCommand('insertText', false, emoji);
+                          }
+                        }}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+              
+              {/* Google Drive */}
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-600 hover:bg-gray-100">
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12.01 1.485c-2.082 0-3.754.02-3.743.047.01.02 1.708 3.001 3.774 6.62l3.76 6.574h3.76c2.081 0 3.753-.02 3.742-.047-.005-.02-1.708-3.001-3.775-6.62l-3.76-6.574h-3.758zm-5.735 1.04l-6.27 10.89 1.88 3.298 1.88 3.297h3.77l-1.893-3.297-1.893-3.298 4.38-7.59 2.19-3.8h-.005c-1.15 0-2.59.02-4.04.05z"/>
+                </svg>
+              </Button>
+              
+              {/* Photo */}
+              <label className="cursor-pointer">
+                <input type="file" className="hidden" accept="image/*" multiple onChange={(e) => {
+                  const files = e.target.files;
+                  if (files) {
+                    Array.from(files).forEach(file => {
+                      const reader = new FileReader();
+                      reader.onload = () => {
+                        const attachment: EmailAttachment = {
+                          id: generateId(),
+                          messageId: '',
+                          fileName: file.name,
+                          fileSize: file.size,
+                          fileType: file.type,
+                          fileData: reader.result as string,
+                          uploadedAt: new Date()
+                        };
+                        setNewEmail(prev => ({
+                          ...prev,
+                          attachments: [...prev.attachments, attachment]
+                        }));
+                      };
+                      reader.readAsDataURL(file);
+                    });
+                  }
+                }} />
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-600 hover:bg-gray-100" type="button">
+                  <ImageIcon className="w-5 h-5" />
+                </Button>
+              </label>
+              
+              {/* Confidential mode */}
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-600 hover:bg-gray-100">
+                <Lock className="w-5 h-5" />
+              </Button>
+              
+              {/* More options */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-600 hover:bg-gray-100">
+                    <MoreVertical className="w-5 h-5" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-48 p-1">
+                  <button className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded" onClick={() => setNewEmail(prev => ({...prev, priority: 'important'}))}>
+                    Marquer comme important
+                  </button>
+                  <button className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded">
+                    Demander un accusé de réception
+                  </button>
+                  <button className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded">
+                    Planifier l'envoi
+                  </button>
+                </PopoverContent>
+              </Popover>
+              
+              {/* Spacer */}
+              <div className="flex-1" />
+              
+              {/* Trash / Delete draft */}
               <Button 
                 variant="ghost" 
-                size="sm"
+                size="sm" 
+                className="h-8 w-8 p-0 text-gray-600 hover:bg-gray-100"
                 onClick={() => {
-                  // Save as draft
-                  if (newEmail.subject || newEmail.body || newEmail.to.length > 0) {
-                    const draft: InternalMessage = {
-                      id: generateId(),
-                      from: {
-                        id: user?.id || '',
-                        name: user?.name || '',
-                        email: user?.email || ''
-                      },
-                      to: newEmail.to,
-                      cc: newEmail.cc,
-                      subject: newEmail.subject,
-                      body: newEmail.body,
-                      attachments: newEmail.attachments,
-                      folder: 'drafts',
-                      status: 'unread',
-                      priority: 'normal',
-                      isStarred: false,
-                      isRead: true,
-                      labels: [],
-                      createdAt: new Date(),
-                      updatedAt: new Date(),
-                      isDraft: true
-                    };
-                    setMessages(prev => [draft, ...prev]);
-                    toast.success('Brouillon sauvegardé');
+                  setNewEmail({
+                    to: [],
+                    cc: [],
+                    bcc: [],
+                    subject: '',
+                    body: '',
+                    attachments: [],
+                    priority: 'normal',
+                    scheduledAt: null
+                  });
+                  if (editorRef.current) {
+                    editorRef.current.innerHTML = '';
                   }
                   setComposeOpen(false);
                 }}
               >
-                Enregistrer le brouillon
+                <Trash2 className="w-5 h-5" />
               </Button>
             </div>
           </DialogContent>
