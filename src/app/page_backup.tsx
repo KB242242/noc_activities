@@ -42,8 +42,7 @@ import {
   Volume2, VolumeX, Smile, Image as ImageIcon, Film, File, MoreVertical, PhoneOff, UserPlus,
   Hash, AtSign, Pin, Archive, BellOff, Check, RotateCcw, Reply, Forward, Megaphone, Heart, Eye as EyeIcon,
   CheckSquare, Bold, Italic, Underline, Link as LinkIcon, List, ListOrdered, Type, AlignLeft, AlignCenter, AlignRight, Paperclip as AttachIcon, Square, UserX,
-  Minus, Maximize2, Minimize2, Highlighter, Tag, ToggleLeft, ToggleRight, PenTool, FileSignature, FolderOpen, FolderPlus, History, BarChart3,
-  Rocket, Wrench, Zap, Folder, Printer
+  Minus, Maximize2, Minimize2, Highlighter, Tag, Wrench, Trophy, Flag, MapPin
 } from 'lucide-react';
 import EmojiPicker, { Theme as EmojiPickerTheme, EmojiClickData } from 'emoji-picker-react';
 
@@ -58,7 +57,7 @@ type ResponsibilityType = 'CALL_CENTER' | 'MONITORING' | 'REPORTING_1' | 'REPORT
 
 // Types pour le gestionnaire de tâches NOC
 type TaskPriority = 'low' | 'medium' | 'high' | 'critical';
-type TaskCategory = 'incident' | 'maintenance' | 'surveillance' | 'administrative' | 'other';
+type TaskCategory = 'incident' | 'maintenance' | 'surveillance' | 'administrative' | 'other' | 'Monitoring' | 'Reporting 1' | 'Reporting 2' | 'Call Center';
 type AlertType = 'warning' | 'critical' | 'info' | 'success';
 
 // Password validation result
@@ -208,6 +207,7 @@ interface Task {
   priority: TaskPriority;
   responsibility?: ResponsibilityType;
   shiftName?: string;
+  scheduledTime?: string;
   startTime: Date;
   estimatedEndTime: Date;
   actualEndTime?: Date;
@@ -246,7 +246,7 @@ interface NotificationItem {
 // TYPES MESSAGERIE INTERNE (GMAIL-LIKE)
 // ============================================
 
-type MessageFolder = 'inbox' | 'sent' | 'drafts' | 'spam' | 'trash' | 'starred';
+type MessageFolder = 'inbox' | 'sent' | 'drafts' | 'spam' | 'trash' | 'starred' | 'archived';
 type MessageStatus = 'unread' | 'read' | 'important' | 'archived';
 type MessagePriority = 'normal' | 'important' | 'urgent';
 
@@ -465,191 +465,27 @@ interface MessagingStats {
 }
 
 // ============================================
-// TYPES GED (Gestion Électronique des Documents)
+// TYPES GESTION TICKETS
 // ============================================
 
-type GEDDocumentType = 
-  | 'fiche_survey' 
-  | 'deploiement' 
-  | 'maintenance_curative' 
-  | 'maintenance_preventive' 
-  | 'intervention' 
-  | 'facture_e2c' 
-  | 'rapport_reunion_mensuelle' 
-  | 'reunion_hebdomadaire_noc'
-  | 'document_archive'
-  | 'autre';
+type TicketStatus = 'open' | 'in_progress' | 'pending' | 'resolved' | 'closed';
+type TicketPriority = 'low' | 'medium' | 'high' | 'critical';
+type TicketCategory = 'incident' | 'request' | 'problem' | 'change' | 'other';
 
-type GEDDocumentStatus = 
-  | 'en_attente' 
-  | 'approuve' 
-  | 'signe' 
-  | 'rejete' 
-  | 'suspendu' 
-  | 'urgent'
-  | 'archive'
-  | 'supprime';
-
-type GEDPriority = 'normale' | 'haute' | 'urgente' | 'critique';
-
-type GEDRole = 
-  | 'technicien'
-  | 'noc'
-  | 'superviseur'
-  | 'responsable_datacom'
-  | 'responsable_technique'
-  | 'manager'
-  | 'directeur_technique'
-  | 'dip'
-  | 'directeur_general'
-  | 'directeur_commercial';
-
-interface GEDWorkflowEntry {
+interface TicketComment {
   id: string;
-  fromUserId: string;
-  fromUserName: string;
-  fromRole: string;
-  toUserId: string;
-  toUserName: string;
-  toRole: string;
-  action: 'created' | 'sent' | 'approved' | 'rejected' | 'signed' | 'archived' | 'suspended';
-  comment: string;
-  timestamp: Date;
-}
-
-interface GEDDocumentVersion {
-  version: number;
-  fileData: string;
-  fileName: string;
-  modifiedBy: { id: string; name: string };
-  modifiedAt: Date;
-  comment: string;
-}
-
-interface GEDComment {
-  id: string;
+  ticketId: string;
   userId: string;
   userName: string;
   content: string;
+  isPrivate: boolean;
   createdAt: Date;
+  updatedAt?: Date;
 }
 
-// GED Document
-interface GEDDocument {
+interface TicketAttachment {
   id: string;
-  title: string;
-  type: GEDDocumentType;
-  status: GEDDocumentStatus;
-  priority: GEDPriority;
-  urgency: 'normale' | 'rapide' | 'immediate';
-  
-  // Content
-  content?: string;
-  fileData?: string; // base64
-  fileName?: string;
-  fileSize?: number;
-  fileType?: string;
-  
-  // Workflow
-  currentHolder: string; // user ID
-  workflowStep: number;
-  workflowHistory: GEDWorkflowEntry[];
-  
-  // Metadata
-  author: { id: string; name: string; role: string };
-  createdAt: Date;
-  updatedAt: Date;
-  closedAt?: Date;
-  
-  // Classification
-  folder?: string;
-  subFolder?: string;
-  tags: string[];
-  metadata: Record<string, string>;
-  
-  // Security
-  passwordProtected: boolean;
-  restrictOpen: string[]; // role restrictions
-  restrictModify: string[];
-  restrictCapture: boolean;
-  restrictPrint: boolean;
-  
-  // Signature
-  signature?: {
-    userId: string;
-    userName: string;
-    signedAt: Date;
-    signatureData: string; // base64 image
-    stampData?: string;
-  };
-  
-  // Zoho Integration
-  zohoTicketId?: string;
-  linkedToZoho: boolean;
-  
-  // Versioning
-  version: number;
-  versions: GEDDocumentVersion[];
-  
-  // Comments
-  comments: GEDComment[];
-  
-  // Tracking
-  isFollowed: boolean;
-  lastViewedBy: string[];
-}
-
-interface GEDFolder {
-  id: string;
-  name: string;
-  parentId?: string;
-  color: string;
-  icon: string;
-  createdBy: string;
-  createdAt: Date;
-}
-
-// GED External Link
-interface GEDExternalLink {
-  id: string;
-  documentId: string;
-  name: string;
-  url: string;
-  type: 'google_drive' | 'sharepoint' | 'dropbox' | 'other';
-  addedBy: string;
-  addedAt: Date;
-}
-
-// GED Trace/Action Log
-interface GEDTraceAction {
-  id: string;
-  documentId: string;
-  action: 'view' | 'download' | 'print' | 'modify' | 'sign' | 'share' | 'export' | 'delete' | 'restore' | 'convert';
-  userId: string;
-  userName: string;
-  details: string;
-  ipAddress?: string;
-  timestamp: Date;
-}
-
-// GED Signature Placement
-interface GEDSignaturePlacement {
-  id: string;
-  signatureData: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  rotation: number;
-  pageNumber: number;
-  addedBy: string;
-  addedAt: Date;
-}
-
-// GED Document Attachment
-interface GEDAttachment {
-  id: string;
-  documentId: string;
+  ticketId: string;
   fileName: string;
   fileSize: number;
   fileType: string;
@@ -658,43 +494,45 @@ interface GEDAttachment {
   uploadedAt: Date;
 }
 
-// GED Import/Export Format
-type GEDFileFormat = 'pdf' | 'word' | 'excel' | 'image' | 'text';
-type GEDConversionStatus = 'pending' | 'processing' | 'completed' | 'failed';
-
-// GED Conversion Task
-interface GEDConversionTask {
+interface TicketHistory {
   id: string;
-  documentId: string;
-  fromFormat: GEDFileFormat;
-  toFormat: GEDFileFormat;
-  status: GEDConversionStatus;
-  progress: number;
-  resultFileData?: string;
-  resultFileName?: string;
-  startedAt: Date;
-  completedAt?: Date;
-  error?: string;
+  ticketId: string;
+  userId: string;
+  userName: string;
+  action: string;
+  field?: string;
+  oldValue?: string;
+  newValue?: string;
+  timestamp: Date;
 }
 
-// GED Security Settings
-interface GEDSecuritySettings {
-  passwordProtected: boolean;
-  password?: string;
-  restrictOpen: GEDRole[];
-  restrictModify: GEDRole[];
-  restrictPrint: boolean;
-  restrictCapture: boolean;
-  watermark?: string;
-  expiresAt?: Date;
-}
-
-// GED Department/Recipient for workflow
-interface GEDDepartment {
+interface TicketItem {
   id: string;
-  name: string;
-  type: 'department' | 'role' | 'user';
-  recipients: Array<{ id: string; name: string; role: string }>;
+  numero: string;
+  objet: string;
+  description: string;
+  status: TicketStatus;
+  priority: TicketPriority;
+  category: TicketCategory;
+  site: string;
+  localite: string;
+  technicien: string;
+  reporterId: string;
+  reporterName: string;
+  assigneeId?: string;
+  assigneeName?: string;
+  comments: TicketComment[];
+  attachments: TicketAttachment[];
+  history: TicketHistory[];
+  tags: string[];
+  createdAt: Date;
+  updatedAt: Date;
+  resolvedAt?: Date;
+  closedAt?: Date;
+  dueDate?: Date;
+  isDeleted: boolean;
+  deletedAt?: Date;
+  deletedBy?: string;
 }
 
 // ============================================
@@ -749,19 +587,23 @@ const EXTERNAL_LINKS = [
 // CONFIGURATION TÂCHES NOC
 // ============================================
 
-const TASK_PRIORITIES: Record<TaskPriority, { label: string; color: string; bgColor: string }> = {
-  low: { label: 'Faible', color: 'text-slate-600', bgColor: 'bg-slate-100 dark:bg-slate-800' },
-  medium: { label: 'Moyenne', color: 'text-blue-600', bgColor: 'bg-blue-100 dark:bg-blue-900/30' },
-  high: { label: 'Haute', color: 'text-orange-600', bgColor: 'bg-orange-100 dark:bg-orange-900/30' },
-  critical: { label: 'Critique', color: 'text-red-600', bgColor: 'bg-red-100 dark:bg-red-900/30' }
+const TASK_PRIORITIES: Record<TaskPriority, { label: string; color: string; bgColor: string; icon: typeof Flag }> = {
+  low: { label: 'Faible', color: 'text-slate-600', bgColor: 'bg-slate-100 dark:bg-slate-800', icon: Flag },
+  medium: { label: 'Moyenne', color: 'text-blue-600', bgColor: 'bg-blue-100 dark:bg-blue-900/30', icon: Flag },
+  high: { label: 'Haute', color: 'text-orange-600', bgColor: 'bg-orange-100 dark:bg-orange-900/30', icon: Flag },
+  critical: { label: 'Critique', color: 'text-red-600', bgColor: 'bg-red-100 dark:bg-red-900/30', icon: AlertTriangle }
 };
 
-const TASK_CATEGORIES: Record<TaskCategory, { label: string; icon: string }> = {
-  incident: { label: 'Incident', icon: '🚨' },
-  maintenance: { label: 'Maintenance', icon: '🔧' },
-  surveillance: { label: 'Surveillance', icon: '👁️' },
-  administrative: { label: 'Administratif', icon: '📋' },
-  other: { label: 'Autre', icon: '📌' }
+const TASK_CATEGORIES: Record<TaskCategory, { label: string; icon: typeof AlertTriangle }> = {
+  incident: { label: 'Incident', icon: AlertTriangle },
+  maintenance: { label: 'Maintenance', icon: Wrench },
+  surveillance: { label: 'Surveillance', icon: Eye },
+  administrative: { label: 'Administratif', icon: ClipboardList },
+  other: { label: 'Autre', icon: Pin },
+  'Monitoring': { label: 'Monitoring', icon: Activity },
+  'Reporting 1': { label: 'Reporting 1', icon: FileText },
+  'Reporting 2': { label: 'Reporting 2', icon: FileSpreadsheet },
+  'Call Center': { label: 'Call Center', icon: Phone }
 };
 
 const TASK_STATUSES: Record<TaskStatus, { label: string; color: string; bgColor: string }> = {
@@ -773,189 +615,11 @@ const TASK_STATUSES: Record<TaskStatus, { label: string; color: string; bgColor:
   late: { label: 'En retard', color: 'text-red-600', bgColor: 'bg-red-100 dark:bg-red-900/30' }
 };
 
-const BADGE_CONFIG: Record<string, { label: string; icon: string; color: string }> = {
-  exemplary: { label: 'Agent Exemplaire', icon: '🏆', color: 'text-yellow-500' },
-  reliable: { label: 'Agent Fiable', icon: '⭐', color: 'text-blue-500' },
-  improving: { label: 'En Progression', icon: '📈', color: 'text-green-500' },
-  needs_attention: { label: 'À Surveiller', icon: '⚠️', color: 'text-orange-500' }
-};
-
-// ============================================
-// CONFIGURATION GED
-// ============================================
-
-const GED_STATUS_CONFIG: Record<GEDDocumentStatus, { label: string; color: string; bgColor: string }> = {
-  en_attente: { label: 'En attente', color: 'text-yellow-800', bgColor: 'bg-yellow-100 dark:bg-yellow-900/30' },
-  approuve: { label: 'Approuvé', color: 'text-blue-800', bgColor: 'bg-blue-100 dark:bg-blue-900/30' },
-  signe: { label: 'Signé', color: 'text-green-800', bgColor: 'bg-green-100 dark:bg-green-900/30' },
-  rejete: { label: 'Rejeté', color: 'text-red-800', bgColor: 'bg-red-100 dark:bg-red-900/30' },
-  suspendu: { label: 'Suspendu', color: 'text-gray-800', bgColor: 'bg-gray-100 dark:bg-gray-900/30' },
-  urgent: { label: 'Urgent', color: 'text-white', bgColor: 'bg-red-500' },
-  archive: { label: 'Archivé', color: 'text-purple-800', bgColor: 'bg-purple-100 dark:bg-purple-900/30' },
-  supprime: { label: 'Supprimé', color: 'text-red-800', bgColor: 'bg-red-100 dark:bg-red-900/30' }
-};
-
-const GED_PRIORITY_CONFIG: Record<GEDPriority, { label: string; color: string; bgColor: string }> = {
-  normale: { label: 'Normale', color: 'text-gray-800', bgColor: 'bg-gray-100 dark:bg-gray-900/30' },
-  haute: { label: 'Haute', color: 'text-orange-800', bgColor: 'bg-orange-100 dark:bg-orange-900/30' },
-  urgente: { label: 'Urgente', color: 'text-red-800', bgColor: 'bg-red-100 dark:bg-red-900/30' },
-  critique: { label: 'Critique', color: 'text-white', bgColor: 'bg-red-500' }
-};
-
-const GED_TYPE_CONFIG: Record<GEDDocumentType, { label: string; icon: string; color: string }> = {
-  fiche_survey: { label: 'Fiche de Survey', icon: 'ClipboardList', color: 'text-blue-600' },
-  deploiement: { label: 'Déploiement', icon: 'Rocket', color: 'text-green-600' },
-  maintenance_curative: { label: 'Maintenance Curative', icon: 'Wrench', color: 'text-orange-600' },
-  maintenance_preventive: { label: 'Maintenance Préventive', icon: 'Shield', color: 'text-purple-600' },
-  intervention: { label: 'Intervention', icon: 'Zap', color: 'text-red-600' },
-  facture_e2c: { label: 'Facture E²C', icon: 'FileText', color: 'text-cyan-600' },
-  rapport_reunion_mensuelle: { label: 'Rapport Réunion Mensuelle', icon: 'BarChart3', color: 'text-indigo-600' },
-  reunion_hebdomadaire_noc: { label: 'Réunion Hebdomadaire NOC', icon: 'Users', color: 'text-teal-600' },
-  document_archive: { label: 'Document Archivé', icon: 'Archive', color: 'text-gray-600' },
-  autre: { label: 'Autre', icon: 'File', color: 'text-slate-600' }
-};
-
-const GED_URGENCY_CONFIG: Record<string, { label: string; color: string }> = {
-  normale: { label: 'Normale', color: 'text-gray-600' },
-  rapide: { label: 'Rapide', color: 'text-orange-600' },
-  immediate: { label: 'Immédiate', color: 'text-red-600' }
-};
-
-const GED_ROLE_CONFIG: Record<GEDRole, { label: string; level: number }> = {
-  technicien: { label: 'Technicien', level: 1 },
-  noc: { label: 'NOC', level: 2 },
-  superviseur: { label: 'Superviseur', level: 3 },
-  responsable_datacom: { label: 'Responsable Datacom', level: 4 },
-  responsable_technique: { label: 'Responsable Technique', level: 5 },
-  manager: { label: 'Manager', level: 6 },
-  directeur_technique: { label: 'Directeur Technique', level: 7 },
-  dip: { label: 'DIP', level: 8 },
-  directeur_general: { label: 'Directeur Général', level: 9 },
-  directeur_commercial: { label: 'Directeur Commercial', level: 9 }
-};
-
-// GED Departments Configuration
-const GED_DEPARTMENTS: GEDDepartment[] = [
-  {
-    id: 'dept-commercial',
-    name: 'Département Commercial',
-    type: 'department',
-    recipients: [
-      { id: 'role-directeur_commercial', name: 'Directeur Commercial', role: 'directeur_commercial' }
-    ]
-  },
-  {
-    id: 'dept-technique',
-    name: 'Département Technique',
-    type: 'department',
-    recipients: [
-      { id: 'role-responsable_technique', name: 'Responsable Technique', role: 'responsable_technique' },
-      { id: 'role-directeur_technique', name: 'Directeur Technique', role: 'directeur_technique' }
-    ]
-  },
-  {
-    id: 'role-manager',
-    name: 'Manager',
-    type: 'role',
-    recipients: [
-      { id: 'role-manager', name: 'Manager', role: 'manager' }
-    ]
-  },
-  {
-    id: 'role-directeur_technique',
-    name: 'Directeur Technique',
-    type: 'role',
-    recipients: [
-      { id: 'role-directeur_technique', name: 'Directeur Technique', role: 'directeur_technique' }
-    ]
-  },
-  {
-    id: 'role-directeur_general',
-    name: 'Directeur Général',
-    type: 'role',
-    recipients: [
-      { id: 'role-directeur_general', name: 'Directeur Général', role: 'directeur_general' }
-    ]
-  }
-];
-
-// GED File Format Configuration
-const GED_FORMAT_CONFIG: Record<GEDFileFormat, { label: string; extension: string; mimeType: string }> = {
-  pdf: { label: 'PDF', extension: '.pdf', mimeType: 'application/pdf' },
-  word: { label: 'Word', extension: '.docx', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' },
-  excel: { label: 'Excel', extension: '.xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
-  image: { label: 'Image', extension: '.png', mimeType: 'image/png' },
-  text: { label: 'Texte', extension: '.txt', mimeType: 'text/plain' }
-};
-
-// GED Signature Colors
-const GED_SIGNATURE_COLORS = [
-  { name: 'Noir', value: '#000000' },
-  { name: 'Bleu', value: '#0066CC' },
-  { name: 'Rouge', value: '#CC0000' },
-  { name: 'Vert', value: '#006600' }
-];
-
-// GED Signature Sizes
-const GED_SIGNATURE_SIZES = [
-  { name: 'Fin', value: 1 },
-  { name: 'Normal', value: 2 },
-  { name: 'Épais', value: 4 }
-];
-
-// Helper functions for GED
-const getGEDStatusColor = (status: GEDDocumentStatus): string => {
-  return `${GED_STATUS_CONFIG[status]?.bgColor || ''} ${GED_STATUS_CONFIG[status]?.color || ''}`;
-};
-
-const getGEDPriorityColor = (priority: GEDPriority): string => {
-  return `${GED_PRIORITY_CONFIG[priority]?.bgColor || ''} ${GED_PRIORITY_CONFIG[priority]?.color || ''}`;
-};
-
-const getGEDTypeLabel = (type: GEDDocumentType): string => {
-  return GED_TYPE_CONFIG[type]?.label || type;
-};
-
-// GED Type Icon Component
-const GEDTypeIcon = ({ type, className }: { type: GEDDocumentType; className?: string }) => {
-  const iconName = GED_TYPE_CONFIG[type]?.icon || 'File';
-  const iconProps = { className: className || 'w-4 h-4' };
-  
-  switch (iconName) {
-    case 'ClipboardList': return <ClipboardList {...iconProps} />;
-    case 'Rocket': return <Rocket {...iconProps} />;
-    case 'Wrench': return <Wrench {...iconProps} />;
-    case 'Shield': return <Shield {...iconProps} />;
-    case 'Zap': return <Zap {...iconProps} />;
-    case 'FileText': return <FileText {...iconProps} />;
-    case 'BarChart3': return <BarChart3 {...iconProps} />;
-    case 'Users': return <Users {...iconProps} />;
-    case 'Archive': return <Archive {...iconProps} />;
-    default: return <File {...iconProps} />;
-  }
-};
-
-// GED Folder Icon Component
-const GEDFolderIcon = ({ iconName, className }: { iconName: string; className?: string }) => {
-  const iconProps = { className: className || 'w-4 h-4' };
-  
-  switch (iconName) {
-    case 'Zap': return <Zap {...iconProps} />;
-    case 'ClipboardList': return <ClipboardList {...iconProps} />;
-    case 'FileText': return <FileText {...iconProps} />;
-    case 'Users': return <Users {...iconProps} />;
-    case 'Wrench': return <Wrench {...iconProps} />;
-    case 'Archive': return <Archive {...iconProps} />;
-    case 'Folder': return <Folder {...iconProps} />;
-    default: return <Folder {...iconProps} />;
-  }
-};
-
-const formatFileSize = (bytes?: number): string => {
-  if (!bytes) return '';
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+const BADGE_CONFIG: Record<string, { label: string; icon: typeof Trophy; color: string }> = {
+  exemplary: { label: 'Agent Exemplaire', icon: Trophy, color: 'text-yellow-500' },
+  reliable: { label: 'Agent Fiable', icon: Star, color: 'text-blue-500' },
+  improving: { label: 'En Progression', icon: TrendingUp, color: 'text-green-500' },
+  needs_attention: { label: 'À Surveiller', icon: AlertTriangle, color: 'text-orange-500' }
 };
 
 // Seuils d'alerte
@@ -997,8 +661,40 @@ const STATUS_COLORS: Record<TaskStatus, { bg: string; text: string }> = {
   pending: { bg: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400', text: 'En attente' },
   in_progress: { bg: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400', text: 'En cours' },
   completed: { bg: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400', text: 'Terminé' },
-  on_hold: { bg: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400', text: 'Suspendu' }
+  on_hold: { bg: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400', text: 'Suspendu' },
+  cancelled: { bg: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400', text: 'Annulé' },
+  late: { bg: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400', text: 'En retard' }
 };
+
+// ============================================
+// CONFIGURATION TICKETS
+// ============================================
+
+const TICKET_STATUSES: Record<TicketStatus, { label: string; color: string; bgColor: string; borderColor: string }> = {
+  open: { label: 'Ouvert', color: 'text-red-700 dark:text-red-400', bgColor: 'bg-red-100 dark:bg-red-900/40', borderColor: 'border-red-300 dark:border-red-700' },
+  in_progress: { label: 'En cours', color: 'text-blue-700 dark:text-blue-400', bgColor: 'bg-blue-100 dark:bg-blue-900/40', borderColor: 'border-blue-300 dark:border-blue-700' },
+  pending: { label: 'En attente', color: 'text-yellow-700 dark:text-yellow-400', bgColor: 'bg-yellow-100 dark:bg-yellow-900/40', borderColor: 'border-yellow-300 dark:border-yellow-700' },
+  resolved: { label: 'Résolu', color: 'text-green-700 dark:text-green-400', bgColor: 'bg-green-100 dark:bg-green-900/40', borderColor: 'border-green-300 dark:border-green-700' },
+  closed: { label: 'Fermé', color: 'text-slate-700 dark:text-slate-400', bgColor: 'bg-slate-100 dark:bg-slate-800', borderColor: 'border-slate-300 dark:border-slate-600' }
+};
+
+const TICKET_PRIORITIES: Record<TicketPriority, { label: string; color: string; bgColor: string }> = {
+  low: { label: 'Faible', color: 'text-slate-700 dark:text-slate-300', bgColor: 'bg-slate-100 dark:bg-slate-800' },
+  medium: { label: 'Moyenne', color: 'text-blue-700 dark:text-blue-300', bgColor: 'bg-blue-100 dark:bg-blue-900/40' },
+  high: { label: 'Haute', color: 'text-orange-700 dark:text-orange-300', bgColor: 'bg-orange-100 dark:bg-orange-900/40' },
+  critical: { label: 'Critique', color: 'text-red-700 dark:text-red-300', bgColor: 'bg-red-100 dark:bg-red-900/40' }
+};
+
+const TICKET_CATEGORIES: Record<TicketCategory, { label: string; icon: typeof AlertTriangle }> = {
+  incident: { label: 'Incident', icon: AlertTriangle },
+  request: { label: 'Demande', icon: Inbox },
+  problem: { label: 'Problème', icon: AlertCircle },
+  change: { label: 'Changement', icon: RefreshCw },
+  other: { label: 'Autre', icon: Pin }
+};
+
+const SITES_LIST = ['Site A', 'Site B', 'Site C', 'Site D', 'Site E', 'Bureau Central'];
+const LOCALITES_LIST = ['Kinshasa', 'Lubumbashi', 'Goma', 'Mbuji-Mayi', 'Kananga', 'Kisangani'];
 
 const DEMO_USERS: Record<string, UserProfile> = {
   'secureadmin@siliconeconnect.com': { 
@@ -1921,34 +1617,6 @@ export default function NOCActivityApp() {
     highlightColor: '#ffffff',
     align: 'left' as 'left' | 'center' | 'right'
   });
-  
-  // Rich Text Editor States
-  const editorRef = useRef<HTMLDivElement | null>(null);
-  const [editorFontFamily, setEditorFontFamily] = useState('Arial');
-  const [editorFontSize, setEditorFontSize] = useState('3');
-  const [editorTextColor, setEditorTextColor] = useState('#000000');
-  const [editorHighlightColor, setEditorHighlightColor] = useState('#ffffff');
-  const [editorFormats, setEditorFormats] = useState({
-    bold: false,
-    italic: false,
-    underline: false
-  });
-  const [linkUrl, setLinkUrl] = useState('');
-  
-  // Format text function
-  const formatText = (command: string, value?: string) => {
-    document.execCommand(command, false, value);
-    if (editorRef.current) {
-      editorRef.current.focus();
-    }
-    // Update format states
-    setEditorFormats({
-      bold: document.queryCommandState('bold'),
-      italic: document.queryCommandState('italic'),
-      underline: document.queryCommandState('underline')
-    });
-  };
-  
   const [emailNotifications, setEmailNotifications] = useState({
     soundEnabled: true,
     browserNotifications: false,
@@ -2062,144 +1730,6 @@ export default function NOCActivityApp() {
   });
   const [backgroundSettingsOpen, setBackgroundSettingsOpen] = useState(false);
 
-  // ============================================
-  // États pour le module GED (Gestion Électronique des Documents)
-  // ============================================
-  
-  const [gedDocuments, setGedDocuments] = useState<GEDDocument[]>([]);
-  const [gedFolders, setGedFolders] = useState<GEDFolder[]>([]);
-  const [gedCurrentFolder, setGedCurrentFolder] = useState<string | null>(null);
-  const [gedSelectedDocument, setGedSelectedDocument] = useState<GEDDocument | null>(null);
-  const [gedSearchQuery, setGedSearchQuery] = useState('');
-  const [gedFilterType, setGedFilterType] = useState<GEDDocumentType | 'all'>('all');
-  const [gedFilterStatus, setGedFilterStatus] = useState<GEDDocumentStatus | 'all'>('all');
-  const [gedFilterPriority, setGedFilterPriority] = useState<GEDPriority | 'all'>('all');
-  const [gedCreateDialogOpen, setGedCreateDialogOpen] = useState(false);
-  const [gedUploadDialogOpen, setGedUploadDialogOpen] = useState(false);
-  const [gedSignatureDialogOpen, setGedSignatureDialogOpen] = useState(false);
-  const [gedWorkflowDialogOpen, setGedWorkflowDialogOpen] = useState(false);
-  const [gedStatsDialogOpen, setGedStatsDialogOpen] = useState(false);
-  const [gedDocumentDetailOpen, setGedDocumentDetailOpen] = useState(false);
-  const [gedNewDoc, setGedNewDoc] = useState<Partial<GEDDocument>>({
-    title: '',
-    type: 'autre',
-    status: 'en_attente',
-    priority: 'normale',
-    urgency: 'normale',
-    content: '',
-    tags: [],
-    metadata: {},
-    passwordProtected: false,
-    restrictOpen: [],
-    restrictModify: [],
-    restrictCapture: false,
-    restrictPrint: false,
-    linkedToZoho: false
-  });
-  const [gedSignatureData, setGedSignatureData] = useState<string | null>(null);
-  const [gedSelectedDocuments, setGedSelectedDocuments] = useState<Set<string>>(new Set());
-  const [gedViewMode, setGedViewMode] = useState<'list' | 'grid'>('list');
-  const [gedNewComment, setGedNewComment] = useState('');
-  const [gedWorkflowAction, setGedWorkflowAction] = useState<'send' | 'approve' | 'reject' | 'suspend'>('send');
-  const [gedWorkflowComment, setGedWorkflowComment] = useState('');
-  const [gedWorkflowRecipient, setGedWorkflowRecipient] = useState<string>('');
-  const signatureCanvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  // New GED Enhanced States
-  // Document Import
-  const [gedImportDialogOpen, setGedImportDialogOpen] = useState(false);
-  const [gedImportFiles, setGedImportFiles] = useState<File[]>([]);
-  const [gedImportDragging, setGedImportDragging] = useState(false);
-  const [gedImportProgress, setGedImportProgress] = useState(0);
-
-  // Document Export
-  const [gedExportDialogOpen, setGedExportDialogOpen] = useState(false);
-  const [gedExportFormat, setGedExportFormat] = useState<GEDFileFormat>('pdf');
-  const [gedExportProgress, setGedExportProgress] = useState(0);
-
-  // Document Conversion
-  const [gedConversionDialogOpen, setGedConversionDialogOpen] = useState(false);
-  const [gedConversionTasks, setGedConversionTasks] = useState<GEDConversionTask[]>([]);
-  const [gedConvertFrom, setGedConvertFrom] = useState<GEDFileFormat>('pdf');
-  const [gedConvertTo, setGedConvertTo] = useState<GEDFileFormat>('word');
-
-  // Document Modification
-  const [gedEditDialogOpen, setGedEditDialogOpen] = useState(false);
-  const [gedEditContent, setGedEditContent] = useState('');
-  const [gedEditTitle, setGedEditTitle] = useState('');
-  const [gedRevisionHistory, setGedRevisionHistory] = useState<GEDDocumentVersion[]>([]);
-
-  // Document Deletion
-  const [gedDeleteDialogOpen, setGedDeleteDialogOpen] = useState(false);
-  const [gedDeleteType, setGedDeleteType] = useState<'soft' | 'permanent'>('soft');
-  const [gedTrashDocuments, setGedTrashDocuments] = useState<GEDDocument[]>([]);
-  const [gedTrashDialogOpen, setGedTrashDialogOpen] = useState(false);
-  const [gedLastDeleted, setGedLastDeleted] = useState<GEDDocument | null>(null);
-
-  // Enhanced Signature
-  const [gedSignatureColor, setGedSignatureColor] = useState('#000000');
-  const [gedSignatureSize, setGedSignatureSize] = useState(2);
-  const [gedSignatureImageDialogOpen, setGedSignatureImageDialogOpen] = useState(false);
-  const [gedSignatureImage, setGedSignatureImage] = useState<string | null>(null);
-  const [gedSignaturePlacement, setGedSignaturePlacement] = useState<GEDSignaturePlacement | null>(null);
-  const [gedMultipleSignatures, setGedMultipleSignatures] = useState<GEDSignaturePlacement[]>([]);
-  const [gedSignaturePosition, setGedSignaturePosition] = useState({ x: 50, y: 50, width: 150, height: 50, rotation: 0 });
-
-  // Document Security
-  const [gedSecurityDialogOpen, setGedSecurityDialogOpen] = useState(false);
-  const [gedSecurityPassword, setGedSecurityPassword] = useState('');
-  const [gedSecurityConfirmPassword, setGedSecurityConfirmPassword] = useState('');
-  const [gedSecuritySettings, setGedSecuritySettings] = useState<GEDSecuritySettings>({
-    passwordProtected: false,
-    restrictOpen: [],
-    restrictModify: [],
-    restrictPrint: false,
-    restrictCapture: false
-  });
-  const [gedUnlockDialogOpen, setGedUnlockDialogOpen] = useState(false);
-  const [gedUnlockPassword, setGedUnlockPassword] = useState('');
-  const [gedUnlockAttemptDoc, setGedUnlockAttemptDoc] = useState<GEDDocument | null>(null);
-
-  // Document Traceability
-  const [gedTraceLog, setGedTraceLog] = useState<GEDTraceAction[]>([]);
-  const [gedTraceDialogOpen, setGedTraceDialogOpen] = useState(false);
-  const [gedJourneyDialogOpen, setGedJourneyDialogOpen] = useState(false);
-
-  // Document Journey/Workflow Timeline
-  const [gedJourneyTimeline, setGedJourneyTimeline] = useState<GEDWorkflowEntry[]>([]);
-
-  // Scan Document
-  const [gedScanDialogOpen, setGedScanDialogOpen] = useState(false);
-  const [gedScanProgress, setGedScanProgress] = useState(0);
-  const [gedScanResult, setGedScanResult] = useState<string | null>(null);
-  const [gedOcrResult, setGedOcrResult] = useState<string>('');
-
-  // Print Document
-  const [gedPrintPreviewOpen, setGedPrintPreviewOpen] = useState(false);
-  const [gedPrintWithSignature, setGedPrintWithSignature] = useState(true);
-
-  // External Links
-  const [gedExternalLinks, setGedExternalLinks] = useState<GEDExternalLink[]>([]);
-  const [gedExternalLinkDialogOpen, setGedExternalLinkDialogOpen] = useState(false);
-  const [gedNewExternalLink, setGedNewExternalLink] = useState({ name: '', url: '', type: 'other' as const });
-
-  // Date Filters
-  const [gedDateFilterOpen, setGedDateFilterOpen] = useState(false);
-  const [gedDateFrom, setGedDateFrom] = useState<Date | null>(null);
-  const [gedDateTo, setGedDateTo] = useState<Date | null>(null);
-  const [gedClosedDateFrom, setGedClosedDateFrom] = useState<Date | null>(null);
-  const [gedClosedDateTo, setGedClosedDateTo] = useState<Date | null>(null);
-  const [gedActiveDateFilter, setGedActiveDateFilter] = useState<'creation' | 'closure' | 'none'>('none');
-
-  // Quick Stats Active Filter
-  const [gedActiveQuickFilter, setGedActiveQuickFilter] = useState<GEDDocumentStatus | 'all'>('all');
-
-  // Department Selection for Workflow
-  const [gedSelectedDepartment, setGedSelectedDepartment] = useState<string>('');
-
-  // File input ref for import
-  const gedFileInputRef = useRef<HTMLInputElement | null>(null);
-
   // Status system (WhatsApp-style)
   const [statusList, setStatusList] = useState<Array<{
     id: string;
@@ -2274,6 +1804,37 @@ export default function NOCActivityApp() {
   // Reply to message - keep reference after sending
   const [lastReplyTo, setLastReplyTo] = useState<ChatMessage | null>(null);
 
+  // ============================================
+  // États pour la Gestion des Tickets
+  // ============================================
+
+  const [tickets, setTickets] = useState<TicketItem[]>([]);
+  const [selectedTicket, setSelectedTicket] = useState<TicketItem | null>(null);
+  const [ticketDialogOpen, setTicketDialogOpen] = useState(false);
+  const [ticketDetailOpen, setTicketDetailOpen] = useState(false);
+  const [createTicketOpen, setCreateTicketOpen] = useState(false);
+  const [ticketViewMode, setTicketViewMode] = useState<'list' | 'card'>('list');
+  const [ticketSearchQuery, setTicketSearchQuery] = useState('');
+  const [ticketStatusFilter, setTicketStatusFilter] = useState<TicketStatus | 'all'>('all');
+  const [ticketPriorityFilter, setTicketPriorityFilter] = useState<TicketPriority | 'all'>('all');
+  const [ticketSiteFilter, setTicketSiteFilter] = useState<string>('all');
+  const [ticketLocaliteFilter, setTicketLocaliteFilter] = useState<string>('all');
+  const [ticketTechnicienFilter, setTicketTechnicienFilter] = useState<string>('all');
+  const [showDeletedTickets, setShowDeletedTickets] = useState(false);
+  const [newTicket, setNewTicket] = useState({
+    objet: '',
+    description: '',
+    priority: 'medium' as TicketPriority,
+    category: 'incident' as TicketCategory,
+    site: '',
+    localite: '',
+    technicien: ''
+  });
+  const [newTicketComment, setNewTicketComment] = useState('');
+  const [isPrivateComment, setIsPrivateComment] = useState(false);
+  const [editingTicket, setEditingTicket] = useState<TicketItem | null>(null);
+  const [editTicketOpen, setEditTicketOpen] = useState(false);
+
   // Typing indicator simulation
   const [simulatedTyping, setSimulatedTyping] = useState<{ userId: string; userName: string; isRecording: boolean } | null>(null);
 
@@ -2317,10 +1878,17 @@ export default function NOCActivityApp() {
   useEffect(() => {
     if (isAuthenticated && tasks.length === 0) {
       const timer = setTimeout(() => {
+        const now = new Date();
         setTasks([
-          { id: 't1', userId: 'agent-a1', userName: 'Alaine', title: 'Vérifier alarmes Zabbix', description: 'Monitoring alerts', status: 'in_progress', category: 'Monitoring', createdAt: new Date(), updatedAt: new Date(), scheduledTime: '08:00' },
-          { id: 't2', userId: 'agent-a1', userName: 'Alaine', title: 'Envoyer graphes 09h', description: 'Graphes trafic', status: 'completed', category: 'Reporting 1', createdAt: new Date(), updatedAt: new Date(), scheduledTime: '09:00', completedAt: new Date() },
-          { id: 't3', userId: 'agent-c2', userName: 'Lapreuve', title: 'Appel client ACME', description: 'Suivi incident', status: 'pending', category: 'Call Center', createdAt: new Date(), updatedAt: new Date(), scheduledTime: '10:30' },
+          { 
+            id: 't1', userId: 'agent-a1', userName: 'Alaine', title: 'Vérifier alarmes Zabbix', description: 'Monitoring alerts', status: 'in_progress', category: 'Monitoring', priority: 'high', createdAt: now, updatedAt: now, scheduledTime: '08:00', startTime: now, estimatedEndTime: new Date(now.getTime() + 3600000), estimatedDuration: 60, comments: [], alerts: [], history: [], tags: [], isOverdue: false, isNotified: false 
+          },
+          { 
+            id: 't2', userId: 'agent-a1', userName: 'Alaine', title: 'Envoyer graphes 09h', description: 'Graphes trafic', status: 'completed', category: 'Reporting 1', priority: 'medium', createdAt: now, updatedAt: now, scheduledTime: '09:00', completedAt: now, startTime: now, estimatedEndTime: new Date(now.getTime() + 3600000), estimatedDuration: 60, comments: [], alerts: [], history: [], tags: [], isOverdue: false, isNotified: false 
+          },
+          { 
+            id: 't3', userId: 'agent-c2', userName: 'Lapreuve', title: 'Appel client ACME', description: 'Suivi incident', status: 'pending', category: 'Call Center', priority: 'low', createdAt: now, updatedAt: now, scheduledTime: '10:30', startTime: now, estimatedEndTime: new Date(now.getTime() + 3600000), estimatedDuration: 60, comments: [], alerts: [], history: [], tags: [], isOverdue: false, isNotified: false 
+          },
         ]);
         setActivities([
           { id: 'a1', userId: 'agent-c2', userName: 'Lapreuve', type: 'CLIENT_DOWN', category: 'Monitoring', description: 'Client ACME - Connexion perdue', createdAt: new Date(Date.now() - 3600000) },
@@ -2337,7 +1905,7 @@ export default function NOCActivityApp() {
     }
   }, [isAuthenticated, tasks.length]);
 
-  // Charger les utilisateurs et logs depuis localStorage
+  // Charger les utilisateurs, logs et tickets depuis localStorage
   useEffect(() => {
     const loadData = () => {
       const storedUsers = localStorage.getItem('noc_all_users');
@@ -2364,12 +1932,42 @@ export default function NOCActivityApp() {
           }
         } catch { /* ignore */ }
       }
+
+      // Charger les tickets depuis localStorage
+      const storedTickets = localStorage.getItem('noc_tickets');
+      if (storedTickets) {
+        try {
+          const parsed = JSON.parse(storedTickets);
+          if (parsed.length > 0) {
+            // Convertir les dates
+            const ticketsWithDates = parsed.map((t: any) => ({
+              ...t,
+              createdAt: new Date(t.createdAt),
+              updatedAt: new Date(t.updatedAt),
+              resolvedAt: t.resolvedAt ? new Date(t.resolvedAt) : undefined,
+              closedAt: t.closedAt ? new Date(t.closedAt) : undefined,
+              dueDate: t.dueDate ? new Date(t.dueDate) : undefined,
+              deletedAt: t.deletedAt ? new Date(t.deletedAt) : undefined,
+              comments: t.comments?.map((c: any) => ({...c, createdAt: new Date(c.createdAt), updatedAt: c.updatedAt ? new Date(c.updatedAt) : undefined})) || [],
+              history: t.history?.map((h: any) => ({...h, timestamp: new Date(h.timestamp)})) || [],
+            }));
+            setTickets(ticketsWithDates);
+          }
+        } catch { /* ignore */ }
+      }
     };
     
     // Utiliser un timeout pour éviter le setState synchrone
     const timer = setTimeout(loadData, 0);
     return () => clearTimeout(timer);
   }, []);
+
+  // Sauvegarder les tickets dans localStorage à chaque modification
+  useEffect(() => {
+    if (tickets.length > 0) {
+      localStorage.setItem('noc_tickets', JSON.stringify(tickets));
+    }
+  }, [tickets]);
 
   // Initialiser les conversations de démo pour la messagerie WhatsApp
   useEffect(() => {
@@ -2696,268 +2294,6 @@ export default function NOCActivityApp() {
     
     return filtered;
   };
-
-  // Initialize GED demo documents
-  useEffect(() => {
-    if (isAuthenticated && user && gedDocuments.length === 0) {
-      const initGEDDocuments = () => {
-        const sampleDocs: GEDDocument[] = [
-          {
-            id: 'ged-1',
-            title: 'Rapport Intervention Site DC',
-            type: 'intervention',
-            status: 'en_attente',
-            priority: 'haute',
-            urgency: 'rapide',
-            currentHolder: user.id,
-            workflowStep: 2,
-            workflowHistory: [
-              {
-                id: 'wf-1',
-                fromUserId: user.id,
-                fromUserName: user.name,
-                fromRole: 'noc',
-                toUserId: 'sup-1',
-                toUserName: 'Theresia',
-                toRole: 'superviseur',
-                action: 'sent',
-                comment: 'Document créé et envoyé pour validation',
-                timestamp: new Date(Date.now() - 86400000)
-              }
-            ],
-            author: { id: user.id, name: user.name, role: user.role },
-            createdAt: new Date(Date.now() - 86400000),
-            updatedAt: new Date(),
-            tags: ['intervention', 'DC', 'urgent'],
-            metadata: { site: 'Data Center Principal', ticket: 'TKT-2024-001' },
-            passwordProtected: false,
-            restrictOpen: [],
-            restrictModify: [],
-            restrictCapture: false,
-            restrictPrint: false,
-            linkedToZoho: true,
-            zohoTicketId: '12345',
-            version: 1,
-            versions: [],
-            comments: [
-              { id: 'c1', userId: 'sup-1', userName: 'Theresia', content: 'Merci pour ce rapport. Je vais l\'examiner.', createdAt: new Date(Date.now() - 3600000) }
-            ],
-            isFollowed: true,
-            lastViewedBy: [user.id, 'sup-1']
-          },
-          {
-            id: 'ged-2',
-            title: 'Fiche de Survey - Client ABC Corp',
-            type: 'fiche_survey',
-            status: 'approuve',
-            priority: 'normale',
-            urgency: 'normale',
-            currentHolder: 'sup-1',
-            workflowStep: 3,
-            workflowHistory: [
-              {
-                id: 'wf-2',
-                fromUserId: user.id,
-                fromUserName: user.name,
-                fromRole: 'technicien',
-                toUserId: 'sup-1',
-                toUserName: 'Theresia',
-                toRole: 'superviseur',
-                action: 'approved',
-                comment: 'Survey complété avec succès',
-                timestamp: new Date(Date.now() - 172800000)
-              }
-            ],
-            author: { id: user.id, name: user.name, role: user.role },
-            createdAt: new Date(Date.now() - 259200000),
-            updatedAt: new Date(Date.now() - 172800000),
-            closedAt: new Date(Date.now() - 172800000),
-            tags: ['survey', 'client', 'ABC'],
-            metadata: { client: 'ABC Corp', location: 'Zone Industrielle Nord' },
-            passwordProtected: false,
-            restrictOpen: [],
-            restrictModify: [],
-            restrictCapture: false,
-            restrictPrint: false,
-            linkedToZoho: false,
-            version: 2,
-            versions: [
-              {
-                version: 1,
-                fileData: '',
-                fileName: 'survey_v1.pdf',
-                modifiedBy: { id: user.id, name: user.name },
-                modifiedAt: new Date(Date.now() - 259200000),
-                comment: 'Version initiale'
-              }
-            ],
-            comments: [],
-            isFollowed: false,
-            lastViewedBy: [user.id, 'sup-1']
-          },
-          {
-            id: 'ged-3',
-            title: 'Facture E²C - Janvier 2024',
-            type: 'facture_e2c',
-            status: 'signe',
-            priority: 'urgente',
-            urgency: 'immediate',
-            currentHolder: 'super-admin-1',
-            workflowStep: 4,
-            workflowHistory: [
-              {
-                id: 'wf-3',
-                fromUserId: 'sup-1',
-                fromUserName: 'Theresia',
-                fromRole: 'superviseur',
-                toUserId: 'super-admin-1',
-                toUserName: 'Admin',
-                toRole: 'directeur_general',
-                action: 'signed',
-                comment: 'Facture validée et signée',
-                timestamp: new Date(Date.now() - 43200000)
-              }
-            ],
-            author: { id: 'sup-1', name: 'Theresia', role: 'RESPONSABLE' },
-            createdAt: new Date(Date.now() - 604800000),
-            updatedAt: new Date(Date.now() - 43200000),
-            closedAt: new Date(Date.now() - 43200000),
-            tags: ['facture', 'E2C', 'finance'],
-            metadata: { montant: '2,500,000 FCFA', periode: 'Janvier 2024' },
-            passwordProtected: true,
-            restrictOpen: ['directeur_general', 'directeur_commercial', 'responsable_datacom'],
-            restrictModify: ['directeur_general'],
-            restrictCapture: true,
-            restrictPrint: true,
-            signature: {
-              userId: 'super-admin-1',
-              userName: 'Admin',
-              signedAt: new Date(Date.now() - 43200000),
-              signatureData: '',
-              stampData: ''
-            },
-            linkedToZoho: false,
-            version: 1,
-            versions: [],
-            comments: [],
-            isFollowed: true,
-            lastViewedBy: ['sup-1', 'super-admin-1']
-          },
-          {
-            id: 'ged-4',
-            title: 'Procès-verbal Réunion Hebdomadaire NOC',
-            type: 'reunion_hebdomadaire_noc',
-            status: 'en_attente',
-            priority: 'normale',
-            urgency: 'normale',
-            currentHolder: user.id,
-            workflowStep: 1,
-            workflowHistory: [],
-            author: { id: user.id, name: user.name, role: user.role },
-            createdAt: new Date(Date.now() - 7200000),
-            updatedAt: new Date(Date.now() - 7200000),
-            tags: ['réunion', 'NOC', 'hebdomadaire'],
-            metadata: { date: format(new Date(), 'yyyy-MM-dd'), participants: '12' },
-            passwordProtected: false,
-            restrictOpen: [],
-            restrictModify: [],
-            restrictCapture: false,
-            restrictPrint: false,
-            linkedToZoho: false,
-            version: 1,
-            versions: [],
-            comments: [],
-            isFollowed: false,
-            lastViewedBy: [user.id]
-          },
-          {
-            id: 'ged-5',
-            title: 'Maintenance Préventive - Routeur Principal',
-            type: 'maintenance_preventive',
-            status: 'urgent',
-            priority: 'critique',
-            urgency: 'immediate',
-            currentHolder: user.id,
-            workflowStep: 1,
-            workflowHistory: [],
-            author: { id: user.id, name: user.name, role: user.role },
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            tags: ['maintenance', 'routeur', 'critique'],
-            metadata: { equipment: 'Cisco ISR 4451', location: 'Salle Serveur A' },
-            passwordProtected: false,
-            restrictOpen: [],
-            restrictModify: [],
-            restrictCapture: false,
-            restrictPrint: false,
-            linkedToZoho: true,
-            zohoTicketId: '12346',
-            version: 1,
-            versions: [],
-            comments: [],
-            isFollowed: true,
-            lastViewedBy: []
-          },
-          {
-            id: 'ged-6',
-            title: 'Déploiement - Extension Réseau Client XYZ',
-            type: 'deploiement',
-            status: 'suspendu',
-            priority: 'haute',
-            urgency: 'rapide',
-            currentHolder: 'sup-1',
-            workflowStep: 2,
-            workflowHistory: [
-              {
-                id: 'wf-4',
-                fromUserId: user.id,
-                fromUserName: user.name,
-                fromRole: 'technicien',
-                toUserId: 'sup-1',
-                toUserName: 'Theresia',
-                toRole: 'superviseur',
-                action: 'suspended',
-                comment: 'En attente de confirmation du client',
-                timestamp: new Date(Date.now() - 86400000)
-              }
-            ],
-            author: { id: user.id, name: user.name, role: user.role },
-            createdAt: new Date(Date.now() - 432000000),
-            updatedAt: new Date(Date.now() - 86400000),
-            tags: ['déploiement', 'client', 'XYZ', 'réseau'],
-            metadata: { client: 'XYZ SARL', sites: '3' },
-            passwordProtected: false,
-            restrictOpen: [],
-            restrictModify: [],
-            restrictCapture: false,
-            restrictPrint: false,
-            linkedToZoho: false,
-            version: 1,
-            versions: [],
-            comments: [],
-            isFollowed: true,
-            lastViewedBy: [user.id, 'sup-1']
-          }
-        ];
-        
-        setGedDocuments(sampleDocs);
-        
-        // Initialize folders
-        const defaultFolders: GEDFolder[] = [
-          { id: 'folder-1', name: 'Interventions', color: '#EF4444', icon: 'Zap', createdBy: user.id, createdAt: new Date() },
-          { id: 'folder-2', name: 'Surveys', color: '#3B82F6', icon: 'ClipboardList', createdBy: user.id, createdAt: new Date() },
-          { id: 'folder-3', name: 'Factures', color: '#10B981', icon: 'FileText', createdBy: user.id, createdAt: new Date() },
-          { id: 'folder-4', name: 'Réunions', color: '#8B5CF6', icon: 'Users', createdBy: user.id, createdAt: new Date() },
-          { id: 'folder-5', name: 'Maintenance', color: '#F59E0B', icon: 'Wrench', createdBy: user.id, createdAt: new Date() },
-          { id: 'folder-6', name: 'Archives', color: '#6B7280', icon: 'Archive', createdBy: user.id, createdAt: new Date() }
-        ];
-        setGedFolders(defaultFolders);
-      };
-      
-      const timer = setTimeout(initGEDDocuments, 150);
-      return () => clearTimeout(timer);
-    }
-  }, [isAuthenticated, user, gedDocuments.length]);
 
   // Initialize demo emails for Gmail clone
   useEffect(() => {
@@ -4214,6 +3550,18 @@ export default function NOCActivityApp() {
             <span>© {new Date().getFullYear()} Silicone Connect</span>
             <span className="w-8 h-[1px] bg-slate-300 dark:bg-slate-700" />
           </motion.p>
+
+          {/* Bouton Télécharger le projet */}
+          <motion.a
+            href="/api/download-project"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1, duration: 0.4 }}
+            className="mt-4 flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-medium rounded-lg hover:from-cyan-400 hover:to-blue-500 transition-all shadow-lg"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+            Télécharger le projet (ZIP)
+          </motion.a>
         </motion.div>
       </div>
     );
@@ -4361,36 +3709,50 @@ export default function NOCActivityApp() {
 
         <div className="flex">
           {/* Sidebar */}
-          <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed lg:sticky top-14 left-0 z-40 w-60 h-[calc(100vh-3.5rem)] border-r bg-background transition-transform duration-300 lg:translate-x-0`}>
+          <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed lg:sticky top-14 left-0 z-40 ${sidebarCollapsed ? 'lg:w-16' : 'lg:w-60'} w-60 h-[calc(100vh-3.5rem)] border-r bg-background transition-all duration-300 lg:translate-x-0`}>
+            {/* Collapse/Expand Toggle - Desktop only */}
+            <div className="hidden lg:flex justify-end p-2 border-b">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              >
+                {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+              </Button>
+            </div>
             <ScrollArea className="h-full">
               <nav className="p-3 space-y-1">
-                <Button variant={currentTab === 'dashboard' ? 'secondary' : 'ghost'} className="w-full justify-start gap-3 h-10" onClick={() => setCurrentTab('dashboard')}>
-                  <LayoutDashboard className="w-5 h-5" /> Tableau de bord
+                <Button variant={currentTab === 'dashboard' ? 'secondary' : 'ghost'} className={`w-full ${sidebarCollapsed ? 'lg:justify-center' : 'justify-start'} gap-3 h-10`} onClick={() => setCurrentTab('dashboard')}>
+                  <LayoutDashboard className="w-5 h-5" /> {!sidebarCollapsed && 'Tableau de bord'}
                 </Button>
-                <Button variant={currentTab === 'planning' ? 'secondary' : 'ghost'} className="w-full justify-start gap-3 h-10" onClick={() => setCurrentTab('planning')}>
-                  <Calendar className="w-5 h-5" /> Planning
+                <Button variant={currentTab === 'planning' ? 'secondary' : 'ghost'} className={`w-full ${sidebarCollapsed ? 'lg:justify-center' : 'justify-start'} gap-3 h-10`} onClick={() => setCurrentTab('planning')}>
+                  <Calendar className="w-5 h-5" /> {!sidebarCollapsed && 'Planning'}
                 </Button>
-                <Button variant={currentTab === 'tasks' ? 'secondary' : 'ghost'} className="w-full justify-start gap-3 h-10" onClick={() => setCurrentTab('tasks')}>
-                  <ClipboardList className="w-5 h-5" /> Mes Tâches
+                <Button variant={currentTab === 'tasks' ? 'secondary' : 'ghost'} className={`w-full ${sidebarCollapsed ? 'lg:justify-center' : 'justify-start'} gap-3 h-10`} onClick={() => setCurrentTab('tasks')}>
+                  <ClipboardList className="w-5 h-5" /> {!sidebarCollapsed && 'Mes Tâches'}
                 </Button>
-                <Button variant={currentTab === 'activities' ? 'secondary' : 'ghost'} className="w-full justify-start gap-3 h-10" onClick={() => setCurrentTab('activities')}>
-                  <Activity className="w-5 h-5" /> Activités
+                <Button variant={currentTab === 'activities' ? 'secondary' : 'ghost'} className={`w-full ${sidebarCollapsed ? 'lg:justify-center' : 'justify-start'} gap-3 h-10`} onClick={() => setCurrentTab('activities')}>
+                  <Activity className="w-5 h-5" /> {!sidebarCollapsed && 'Activités'}
                 </Button>
-                <Button variant={currentTab === 'overtime' ? 'secondary' : 'ghost'} className="w-full justify-start gap-3 h-10" onClick={() => setCurrentTab('overtime')}>
-                  <Clock className="w-5 h-5" /> Heures Sup.
+                <Button variant={currentTab === 'tickets' ? 'secondary' : 'ghost'} className={`w-full ${sidebarCollapsed ? 'lg:justify-center' : 'justify-start'} gap-3 h-10`} onClick={() => setCurrentTab('tickets')}>
+                  <Ticket className="w-5 h-5" /> {!sidebarCollapsed && 'Gestion Tickets'}
                 </Button>
-                <Button variant={currentTab === 'links' ? 'secondary' : 'ghost'} className="w-full justify-start gap-3 h-10" onClick={() => setCurrentTab('links')}>
-                  <ExternalLink className="w-5 h-5" /> Liens Externes
+                <Button variant={currentTab === 'overtime' ? 'secondary' : 'ghost'} className={`w-full ${sidebarCollapsed ? 'lg:justify-center' : 'justify-start'} gap-3 h-10`} onClick={() => setCurrentTab('overtime')}>
+                  <Clock className="w-5 h-5" /> {!sidebarCollapsed && 'Heures Sup.'}
                 </Button>
-                <Button variant={currentTab === 'email' ? 'secondary' : 'ghost'} className="w-full justify-start gap-3 h-10" onClick={() => setCurrentTab('email')}>
-                  <MessageCircle className="w-5 h-5" /> Chats
-                  {conversations.reduce((acc, c) => acc + c.unreadCount, 0) > 0 && (
+                <Button variant={currentTab === 'links' ? 'secondary' : 'ghost'} className={`w-full ${sidebarCollapsed ? 'lg:justify-center' : 'justify-start'} gap-3 h-10`} onClick={() => setCurrentTab('links')}>
+                  <ExternalLink className="w-5 h-5" /> {!sidebarCollapsed && 'Liens Externes'}
+                </Button>
+                <Button variant={currentTab === 'email' ? 'secondary' : 'ghost'} className={`w-full ${sidebarCollapsed ? 'lg:justify-center' : 'justify-start'} gap-3 h-10`} onClick={() => setCurrentTab('email')}>
+                  <MessageCircle className="w-5 h-5" /> {!sidebarCollapsed && 'Chats'}
+                  {!sidebarCollapsed && conversations.reduce((acc, c) => acc + c.unreadCount, 0) > 0 && (
                     <Badge className="ml-auto bg-green-500 text-white text-xs px-1.5 py-0.5 min-w-[20px] justify-center">
                       {conversations.reduce((acc, c) => acc + c.unreadCount, 0)}
                     </Badge>
                   )}
                 </Button>
-                <Button variant={currentTab === 'messagerie' ? 'secondary' : 'ghost'} className="w-full justify-start gap-3 h-10" onClick={() => setCurrentTab('messagerie')}>
+                <Button variant={currentTab === 'messagerie' ? 'secondary' : 'ghost'} className={`w-full ${sidebarCollapsed ? 'lg:justify-center' : 'justify-start'} gap-3 h-10`} onClick={() => setCurrentTab('messagerie')}>
                   <Mail className="w-5 h-5" /> {!sidebarCollapsed && 'Messagerie'}
                   {!sidebarCollapsed && messages.filter(m => m.folder === 'inbox' && !m.isRead).length > 0 && (
                     <Badge className="ml-auto bg-red-500 text-white text-xs px-1.5 py-0.5 min-w-[20px] justify-center">
@@ -4398,33 +3760,28 @@ export default function NOCActivityApp() {
                     </Badge>
                   )}
                 </Button>
-                <Button variant={currentTab === 'ged' ? 'secondary' : 'ghost'} className="w-full justify-start gap-3 h-10" onClick={() => setCurrentTab('ged')}>
+                <Button variant={currentTab === 'ged' ? 'secondary' : 'ghost'} className={`w-full ${sidebarCollapsed ? 'lg:justify-center' : 'justify-start'} gap-3 h-10`} onClick={() => setCurrentTab('ged')}>
                   <FileText className="w-5 h-5" /> {!sidebarCollapsed && 'GED Documents'}
-                  {!sidebarCollapsed && gedDocuments.filter(d => d.status === 'en_attente').length > 0 && (
-                    <Badge className="ml-auto bg-orange-500 text-white text-xs px-1.5 py-0.5 min-w-[20px] justify-center">
-                      {gedDocuments.filter(d => d.status === 'en_attente').length}
-                    </Badge>
-                  )}
                 </Button>
                 
                 {(user?.role === 'RESPONSABLE' || user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
                   <>
                     <Separator className="my-2" />
-                    <Button variant={currentTab === 'supervision' ? 'secondary' : 'ghost'} className="w-full justify-start gap-3 h-10" onClick={() => setCurrentTab('supervision')}>
-                      <Eye className="w-5 h-5" /> Supervision
+                    <Button variant={currentTab === 'supervision' ? 'secondary' : 'ghost'} className={`w-full ${sidebarCollapsed ? 'lg:justify-center' : 'justify-start'} gap-3 h-10`} onClick={() => setCurrentTab('supervision')}>
+                      <Eye className="w-5 h-5" /> {!sidebarCollapsed && 'Supervision'}
                     </Button>
                   </>
                 )}
                 
                 {user?.role === 'ADMIN' && (
-                  <Button variant={currentTab === 'admin' ? 'secondary' : 'ghost'} className="w-full justify-start gap-3 h-10" onClick={() => setCurrentTab('admin')}>
-                    <Settings className="w-5 h-5" /> Administration
+                  <Button variant={currentTab === 'admin' ? 'secondary' : 'ghost'} className={`w-full ${sidebarCollapsed ? 'lg:justify-center' : 'justify-start'} gap-3 h-10`} onClick={() => setCurrentTab('admin')}>
+                    <Settings className="w-5 h-5" /> {!sidebarCollapsed && 'Administration'}
                   </Button>
                 )}
               </nav>
             </ScrollArea>
             
-            {user?.shift && (
+            {user?.shift && !sidebarCollapsed && (
               <div className="absolute bottom-3 left-3 right-3">
                 <Card className="border-2" style={{ borderColor: getShiftColor(user.shift.name) }}>
                   <CardContent className="p-3">
@@ -5368,8 +4725,6 @@ export default function NOCActivityApp() {
                                           if (audioRef.current && message.mediaData) {
                                             const rect = e.currentTarget.getBoundingClientRect();
                                             const percent = ((e.clientX - rect.left) / rect.width);
-                                            const audio = new Audio(message.mediaData);
-                                            audio.duration = message.duration || 0;
                                             if (audioRef.current.duration) {
                                               audioRef.current.currentTime = percent * audioRef.current.duration;
                                               setAudioProgress(prev => ({...prev, [message.id]: percent * 100}));
@@ -5456,12 +4811,12 @@ export default function NOCActivityApp() {
                                 
                                 // URL detection and linking
                                 const urlRegex = /(https?:\/\/[^\s]+)/g;
-                                const parts = content.split(urlRegex);
+                                const parts = content.split(urlRegex).filter(p => p);
                                 const contentWithLinks = parts.map((part, i) => {
                                   if (part.match(urlRegex)) {
                                     return (
                                       <a 
-                                        key={i} 
+                                        key={`link-${i}`} 
                                         href={part} 
                                         target="_blank" 
                                         rel="noopener noreferrer"
@@ -5477,23 +4832,23 @@ export default function NOCActivityApp() {
                                 // Apply mention highlighting
                                 const contentWithMentions = contentWithLinks.flat().map((part, i) => {
                                   if (typeof part === 'string') {
-                                    const mentionParts = part.split(/(@\w+)/g);
+                                    const mentionParts = part.split(/(@\w+)/g).filter(p => p);
                                     return mentionParts.map((mentionPart, j) => {
                                       if (mentionPart.startsWith('@')) {
-                                        return <span key={`${i}-${j}`} className="text-cyan-600 dark:text-cyan-400 font-medium bg-cyan-50 dark:bg-cyan-900/30 px-1 rounded">{mentionPart}</span>;
+                                        return <span key={`mention-${i}-${j}`} className="text-cyan-600 dark:text-cyan-400 font-medium bg-cyan-50 dark:bg-cyan-900/30 px-1 rounded">{mentionPart}</span>;
                                       }
                                       // Apply search highlighting
                                       if (chatSearchMessageQuery && mentionPart.toLowerCase().includes(chatSearchMessageQuery.toLowerCase())) {
                                         const regex = new RegExp(`(${chatSearchMessageQuery})`, 'gi');
-                                        const searchParts = mentionPart.split(regex);
+                                        const searchParts = mentionPart.split(regex).filter(p => p);
                                         return searchParts.map((searchPart, k) => {
                                           if (searchPart.toLowerCase() === chatSearchMessageQuery.toLowerCase()) {
-                                            return <span key={`${i}-${j}-${k}`} className="bg-yellow-300 dark:bg-yellow-600 rounded px-0.5">{searchPart}</span>;
+                                            return <span key={`search-${i}-${j}-${k}`} className="bg-yellow-300 dark:bg-yellow-600 rounded px-0.5">{searchPart}</span>;
                                           }
-                                          return searchPart;
+                                          return <span key={`text-${i}-${j}-${k}`}>{searchPart}</span>;
                                         });
                                       }
-                                      return mentionPart;
+                                      return <span key={`text-${i}-${j}`}>{mentionPart}</span>;
                                     });
                                   }
                                   return part;
@@ -7405,10 +6760,17 @@ export default function NOCActivityApp() {
                                 <Select value={newTask.priority} onValueChange={(v) => setNewTask({...newTask, priority: v as TaskPriority})}>
                                   <SelectTrigger><SelectValue /></SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="low">🟢 Faible</SelectItem>
-                                    <SelectItem value="medium">🔵 Moyenne</SelectItem>
-                                    <SelectItem value="high">🟠 Haute</SelectItem>
-                                    <SelectItem value="critical">🔴 Critique</SelectItem>
+                                    {Object.entries(TASK_PRIORITIES).map(([key, val]) => {
+                                      const IconComponent = val.icon;
+                                      return (
+                                        <SelectItem key={key} value={key}>
+                                          <div className="flex items-center gap-2">
+                                            <IconComponent className={`w-4 h-4 ${val.color}`} />
+                                            {val.label}
+                                          </div>
+                                        </SelectItem>
+                                      );
+                                    })}
                                   </SelectContent>
                                 </Select>
                               </div>
@@ -7417,11 +6779,17 @@ export default function NOCActivityApp() {
                                 <Select value={newTask.category} onValueChange={(v) => setNewTask({...newTask, category: v as TaskCategory})}>
                                   <SelectTrigger><SelectValue /></SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="incident">🚨 Incident</SelectItem>
-                                    <SelectItem value="maintenance">🔧 Maintenance</SelectItem>
-                                    <SelectItem value="surveillance">👁️ Surveillance</SelectItem>
-                                    <SelectItem value="administrative">📋 Administratif</SelectItem>
-                                    <SelectItem value="other">📌 Autre</SelectItem>
+                                    {Object.entries(TASK_CATEGORIES).map(([key, val]) => {
+                                      const IconComponent = val.icon;
+                                      return (
+                                        <SelectItem key={key} value={key}>
+                                          <div className="flex items-center gap-2">
+                                            <IconComponent className="w-4 h-4" />
+                                            {val.label}
+                                          </div>
+                                        </SelectItem>
+                                      );
+                                    })}
                                   </SelectContent>
                                 </Select>
                               </div>
@@ -7594,11 +6962,11 @@ export default function NOCActivityApp() {
                             <SelectValue placeholder="Filtrer" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="my">📋 Mes tâches</SelectItem>
-                            <SelectItem value="all">👥 Toutes</SelectItem>
-                            <SelectItem value="pending">⏳ En attente</SelectItem>
-                            <SelectItem value="late">🔴 En retard</SelectItem>
-                            <SelectItem value="critical">⚡ Critiques</SelectItem>
+                            <SelectItem value="my"><div className="flex items-center gap-2"><ClipboardList className="w-4 h-4" /> Mes tâches</div></SelectItem>
+                            <SelectItem value="all"><div className="flex items-center gap-2"><Users className="w-4 h-4" /> Toutes</div></SelectItem>
+                            <SelectItem value="pending"><div className="flex items-center gap-2"><Clock3 className="w-4 h-4" /> En attente</div></SelectItem>
+                            <SelectItem value="late"><div className="flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-red-500" /> En retard</div></SelectItem>
+                            <SelectItem value="critical"><div className="flex items-center gap-2"><AlertCircle className="w-4 h-4 text-yellow-500" /> Critiques</div></SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -7675,7 +7043,9 @@ export default function NOCActivityApp() {
                                     <Badge className={`${TASK_PRIORITIES[task.priority].bgColor} ${TASK_PRIORITIES[task.priority].color} text-xs`}>
                                       {TASK_PRIORITIES[task.priority].label}
                                     </Badge>
-                                    <span className="text-lg">{TASK_CATEGORIES[task.category].icon}</span>
+                                    <span className="text-lg flex items-center">
+                                      {(() => { const IconComp = TASK_CATEGORIES[task.category].icon; return <IconComp className="w-4 h-4" />; })()}
+                                    </span>
                                   </div>
                                   {task.description && (
                                     <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{task.description}</p>
@@ -7800,7 +7170,7 @@ export default function NOCActivityApp() {
                               </div>
                               <div className="text-center">
                                 <div className="flex items-center justify-center gap-1">
-                                  <span className="text-2xl">{BADGE_CONFIG[perf.badge || 'needs_attention']?.icon}</span>
+                                  {(() => { const BadgeIcon = BADGE_CONFIG[perf.badge || 'needs_attention']?.icon; return BadgeIcon ? <BadgeIcon className="w-6 h-6" /> : null; })()}
                                 </div>
                                 <p className="text-sm text-muted-foreground">{BADGE_CONFIG[perf.badge || 'needs_attention']?.label}</p>
                               </div>
@@ -7917,7 +7287,688 @@ export default function NOCActivityApp() {
                   </Card>
                 </motion.div>
               )}
-              
+
+              {/* Gestion Tickets */}
+              {currentTab === 'tickets' && (
+                <motion.div key="tickets" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-4">
+                  {/* Header avec bouton créer bien visible */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Gestion des Tickets</h1>
+                      <p className="text-muted-foreground">Suivi et création de tickets</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setTicketViewMode(ticketViewMode === 'list' ? 'card' : 'list')}
+                        className="border-2 border-cyan-500 dark:border-cyan-400"
+                        title={ticketViewMode === 'list' ? 'Vue cartes' : 'Vue liste'}
+                      >
+                        {ticketViewMode === 'list' ? <LayoutDashboard className="w-4 h-4" /> : <ClipboardList className="w-4 h-4" />}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowDeletedTickets(!showDeletedTickets)}
+                        className={`border-2 ${showDeletedTickets ? 'border-red-500 text-red-600 dark:text-red-400' : 'border-slate-300 dark:border-slate-600'}`}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        {showDeletedTickets ? 'Masquer corbeille' : 'Corbeille'}
+                      </Button>
+                      <Dialog open={createTicketOpen} onOpenChange={setCreateTicketOpen}>
+                        <DialogTrigger asChild>
+                          <Button className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold shadow-lg px-6 py-2 text-base">
+                            <Plus className="w-5 h-5 mr-2" /> Créer un ticket
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl bg-white dark:bg-slate-900 border-2 dark:border-slate-700">
+                          <DialogHeader>
+                            <DialogTitle className="text-xl text-foreground">Créer un nouveau ticket</DialogTitle>
+                            <DialogDescription>Remplissez les informations du ticket</DialogDescription>
+                          </DialogHeader>
+                          <div className="grid gap-4 py-4">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="grid gap-2">
+                                <Label className="text-foreground font-medium">Objet *</Label>
+                                <Input
+                                  value={newTicket.objet}
+                                  onChange={(e) => setNewTicket({ ...newTicket, objet: e.target.value })}
+                                  placeholder="Objet du ticket"
+                                  className="border-2 dark:border-slate-600 dark:bg-slate-800"
+                                />
+                              </div>
+                              <div className="grid gap-2">
+                                <Label className="text-foreground font-medium">Catégorie</Label>
+                                <Select value={newTicket.category} onValueChange={(v: TicketCategory) => setNewTicket({ ...newTicket, category: v })}>
+                                  <SelectTrigger className="border-2 dark:border-slate-600 dark:bg-slate-800">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-white dark:bg-slate-800">
+                                    {Object.entries(TICKET_CATEGORIES).map(([key, val]) => {
+                                      const IconComponent = val.icon;
+                                      return (
+                                        <SelectItem key={key} value={key}>
+                                          <span className="flex items-center gap-2">
+                                            <IconComponent className="w-4 h-4" />
+                                            {val.label}
+                                          </span>
+                                        </SelectItem>
+                                      );
+                                    })}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                            <div className="grid gap-2">
+                              <Label className="text-foreground font-medium">Description</Label>
+                              <Textarea
+                                value={newTicket.description}
+                                onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
+                                placeholder="Décrivez le problème ou la demande..."
+                                rows={3}
+                                className="border-2 dark:border-slate-600 dark:bg-slate-800"
+                              />
+                            </div>
+                            <div className="grid grid-cols-3 gap-4">
+                              <div className="grid gap-2">
+                                <Label className="text-foreground font-medium">Priorité</Label>
+                                <Select value={newTicket.priority} onValueChange={(v: TicketPriority) => setNewTicket({ ...newTicket, priority: v })}>
+                                  <SelectTrigger className="border-2 dark:border-slate-600 dark:bg-slate-800">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-white dark:bg-slate-800">
+                                    {Object.entries(TICKET_PRIORITIES).map(([key, val]) => (
+                                      <SelectItem key={key} value={key}>{val.label}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="grid gap-2">
+                                <Label className="text-foreground font-medium">Site</Label>
+                                <Select value={newTicket.site} onValueChange={(v) => setNewTicket({ ...newTicket, site: v })}>
+                                  <SelectTrigger className="border-2 dark:border-slate-600 dark:bg-slate-800">
+                                    <SelectValue placeholder="Sélectionner" />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-white dark:bg-slate-800">
+                                    {SITES_LIST.map(site => (
+                                      <SelectItem key={site} value={site}>{site}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="grid gap-2">
+                                <Label className="text-foreground font-medium">Localité</Label>
+                                <Select value={newTicket.localite} onValueChange={(v) => setNewTicket({ ...newTicket, localite: v })}>
+                                  <SelectTrigger className="border-2 dark:border-slate-600 dark:bg-slate-800">
+                                    <SelectValue placeholder="Sélectionner" />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-white dark:bg-slate-800">
+                                    {LOCALITES_LIST.map(loc => (
+                                      <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                            <div className="grid gap-2">
+                              <Label className="text-foreground font-medium">Technicien assigné</Label>
+                              <Input
+                                value={newTicket.technicien}
+                                onChange={(e) => setNewTicket({ ...newTicket, technicien: e.target.value })}
+                                placeholder="Nom du technicien"
+                                className="border-2 dark:border-slate-600 dark:bg-slate-800"
+                              />
+                            </div>
+                          </div>
+                          <DialogFooter>
+                            <DialogClose asChild>
+                              <Button variant="outline" className="border-2">Annuler</Button>
+                            </DialogClose>
+                            <Button
+                              className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold"
+                              onClick={() => {
+                                if (!newTicket.objet.trim()) {
+                                  toast.error('Erreur', { description: 'L\'objet du ticket est requis' });
+                                  return;
+                                }
+                                const ticket: TicketItem = {
+                                  id: generateId(),
+                                  numero: `TKT-${String(tickets.length + 1).padStart(4, '0')}`,
+                                  objet: newTicket.objet,
+                                  description: newTicket.description,
+                                  status: 'open',
+                                  priority: newTicket.priority,
+                                  category: newTicket.category,
+                                  site: newTicket.site,
+                                  localite: newTicket.localite,
+                                  technicien: newTicket.technicien,
+                                  reporterId: user?.id || '',
+                                  reporterName: user?.name || '',
+                                  comments: [],
+                                  attachments: [],
+                                  history: [{
+                                    id: generateId(),
+                                    ticketId: '',
+                                    userId: user?.id || '',
+                                    userName: user?.name || '',
+                                    action: 'Ticket créé',
+                                    timestamp: new Date()
+                                  }],
+                                  tags: [],
+                                  createdAt: new Date(),
+                                  updatedAt: new Date(),
+                                  isDeleted: false
+                                };
+                                setTickets(prev => [ticket, ...prev]);
+                                setNewTicket({ objet: '', description: '', priority: 'medium', category: 'incident', site: '', localite: '', technicien: '' });
+                                setCreateTicketOpen(false);
+                                toast.success('Ticket créé', { description: `Le ticket ${ticket.numero} a été créé` });
+                              }}
+                            >
+                              <Plus className="w-4 h-4 mr-2" /> Créer le ticket
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </div>
+
+                  {/* Filtres */}
+                  <Card className="border-2 dark:border-slate-700 bg-white dark:bg-slate-900">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base text-foreground">Filtres</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-wrap gap-3">
+                        <div className="flex-1 min-w-[200px]">
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            <Input
+                              placeholder="Rechercher..."
+                              value={ticketSearchQuery}
+                              onChange={(e) => setTicketSearchQuery(e.target.value)}
+                              className="pl-10 border-2 dark:border-slate-600 dark:bg-slate-800"
+                            />
+                          </div>
+                        </div>
+                        <Select value={ticketStatusFilter} onValueChange={(v) => setTicketStatusFilter(v as TicketStatus | 'all')}>
+                          <SelectTrigger className="w-[140px] border-2 dark:border-slate-600 dark:bg-slate-800">
+                            <SelectValue placeholder="Statut" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-white dark:bg-slate-800">
+                            <SelectItem value="all">Tous statuts</SelectItem>
+                            {Object.entries(TICKET_STATUSES).map(([key, val]) => (
+                              <SelectItem key={key} value={key}>{val.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Select value={ticketPriorityFilter} onValueChange={(v) => setTicketPriorityFilter(v as TicketPriority | 'all')}>
+                          <SelectTrigger className="w-[140px] border-2 dark:border-slate-600 dark:bg-slate-800">
+                            <SelectValue placeholder="Priorité" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-white dark:bg-slate-800">
+                            <SelectItem value="all">Toutes priorités</SelectItem>
+                            {Object.entries(TICKET_PRIORITIES).map(([key, val]) => (
+                              <SelectItem key={key} value={key}>{val.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Select value={ticketSiteFilter} onValueChange={setTicketSiteFilter}>
+                          <SelectTrigger className="w-[140px] border-2 dark:border-slate-600 dark:bg-slate-800">
+                            <SelectValue placeholder="Site" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-white dark:bg-slate-800">
+                            <SelectItem value="all">Tous sites</SelectItem>
+                            {SITES_LIST.map(site => (
+                              <SelectItem key={site} value={site}>{site}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Select value={ticketLocaliteFilter} onValueChange={setTicketLocaliteFilter}>
+                          <SelectTrigger className="w-[140px] border-2 dark:border-slate-600 dark:bg-slate-800">
+                            <SelectValue placeholder="Localité" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-white dark:bg-slate-800">
+                            <SelectItem value="all">Toutes localités</SelectItem>
+                            {LOCALITES_LIST.map(loc => (
+                              <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Liste des tickets */}
+                  {ticketViewMode === 'list' ? (
+                    <Card className="border-2 dark:border-slate-700 bg-white dark:bg-slate-900">
+                      <CardContent className="p-0">
+                        <div className="overflow-x-auto">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="border-b-2 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+                                <th className="text-left p-3 font-semibold text-foreground">N°</th>
+                                <th className="text-left p-3 font-semibold text-foreground">Objet</th>
+                                <th className="text-left p-3 font-semibold text-foreground">Statut</th>
+                                <th className="text-left p-3 font-semibold text-foreground">Priorité</th>
+                                <th className="text-left p-3 font-semibold text-foreground">Site</th>
+                                <th className="text-left p-3 font-semibold text-foreground">Technicien</th>
+                                <th className="text-left p-3 font-semibold text-foreground">Date</th>
+                                <th className="text-left p-3 font-semibold text-foreground">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {tickets
+                                .filter(t => {
+                                  if (showDeletedTickets !== t.isDeleted) return false;
+                                  if (ticketSearchQuery && !t.objet.toLowerCase().includes(ticketSearchQuery.toLowerCase()) && !t.numero.toLowerCase().includes(ticketSearchQuery.toLowerCase())) return false;
+                                  if (ticketStatusFilter !== 'all' && t.status !== ticketStatusFilter) return false;
+                                  if (ticketPriorityFilter !== 'all' && t.priority !== ticketPriorityFilter) return false;
+                                  if (ticketSiteFilter !== 'all' && t.site !== ticketSiteFilter) return false;
+                                  if (ticketLocaliteFilter !== 'all' && t.localite !== ticketLocaliteFilter) return false;
+                                  return true;
+                                })
+                                .map(ticket => (
+                                  <tr key={ticket.id} className="border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer" onClick={() => { setSelectedTicket(ticket); setTicketDetailOpen(true); }}>
+                                    <td className="p-3 font-mono font-semibold text-cyan-600 dark:text-cyan-400">{ticket.numero}</td>
+                                    <td className="p-3 max-w-[200px] truncate text-foreground">{ticket.objet}</td>
+                                    <td className="p-3">
+                                      <Badge className={`${TICKET_STATUSES[ticket.status].bgColor} ${TICKET_STATUSES[ticket.status].color} border ${TICKET_STATUSES[ticket.status].borderColor} font-semibold`}>
+                                        {TICKET_STATUSES[ticket.status].label}
+                                      </Badge>
+                                    </td>
+                                    <td className="p-3">
+                                      <Badge className={`${TICKET_PRIORITIES[ticket.priority].bgColor} ${TICKET_PRIORITIES[ticket.priority].color} font-semibold`}>
+                                        {TICKET_PRIORITIES[ticket.priority].label}
+                                      </Badge>
+                                    </td>
+                                    <td className="p-3 text-foreground">{ticket.site || '-'}</td>
+                                    <td className="p-3 text-foreground">{ticket.technicien || '-'}</td>
+                                    <td className="p-3 text-muted-foreground text-sm">{format(ticket.createdAt, 'dd/MM/yyyy HH:mm')}</td>
+                                    <td className="p-3">
+                                      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-blue-100 dark:hover:bg-blue-900/40" onClick={() => { setSelectedTicket(ticket); setTicketDetailOpen(true); }}>
+                                          <Eye className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                        </Button>
+                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-yellow-100 dark:hover:bg-yellow-900/40" onClick={() => { setEditingTicket(ticket); setEditTicketOpen(true); }}>
+                                          <Edit className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
+                                        </Button>
+                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-red-100 dark:hover:bg-red-900/40" onClick={() => {
+                                          if (ticket.isDeleted) {
+                                            setTickets(prev => prev.filter(t => t.id !== ticket.id));
+                                            toast.success('Ticket supprimé définitivement');
+                                          } else {
+                                            setTickets(prev => prev.map(t => t.id === ticket.id ? { ...t, isDeleted: true, deletedAt: new Date(), deletedBy: user?.name } : t));
+                                            toast.success('Ticket déplacé dans la corbeille');
+                                          }
+                                        }}>
+                                          <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
+                                        </Button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))}
+                              {tickets.filter(t => showDeletedTickets === t.isDeleted).length === 0 && (
+                                <tr>
+                                  <td colSpan={8} className="p-8 text-center text-muted-foreground">
+                                    {showDeletedTickets ? 'La corbeille est vide' : 'Aucun ticket. Cliquez sur "Créer un ticket" pour commencer.'}
+                                  </td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {tickets
+                        .filter(t => {
+                          if (showDeletedTickets !== t.isDeleted) return false;
+                          if (ticketSearchQuery && !t.objet.toLowerCase().includes(ticketSearchQuery.toLowerCase())) return false;
+                          if (ticketStatusFilter !== 'all' && t.status !== ticketStatusFilter) return false;
+                          if (ticketPriorityFilter !== 'all' && t.priority !== ticketPriorityFilter) return false;
+                          if (ticketSiteFilter !== 'all' && t.site !== ticketSiteFilter) return false;
+                          return true;
+                        })
+                        .map(ticket => (
+                          <Card key={ticket.id} className={`border-2 ${TICKET_STATUSES[ticket.status].borderColor} bg-white dark:bg-slate-900 hover:shadow-lg transition-shadow cursor-pointer`} onClick={() => { setSelectedTicket(ticket); setTicketDetailOpen(true); }}>
+                            <CardHeader className="pb-2">
+                              <div className="flex items-center justify-between">
+                                <span className="font-mono font-semibold text-cyan-600 dark:text-cyan-400">{ticket.numero}</span>
+                                <Badge className={`${TICKET_STATUSES[ticket.status].bgColor} ${TICKET_STATUSES[ticket.status].color} font-semibold`}>
+                                  {TICKET_STATUSES[ticket.status].label}
+                                </Badge>
+                              </div>
+                              <CardTitle className="text-base text-foreground line-clamp-2">{ticket.objet}</CardTitle>
+                            </CardHeader>
+                            <CardContent className="pb-3">
+                              <div className="space-y-2 text-sm">
+                                <div className="flex items-center gap-2">
+                                  <Badge className={`${TICKET_PRIORITIES[ticket.priority].bgColor} ${TICKET_PRIORITIES[ticket.priority].color} text-xs`}>
+                                    {TICKET_PRIORITIES[ticket.priority].label}
+                                  </Badge>
+                                  <span className="text-muted-foreground flex items-center gap-1">
+                                    {(() => { const CatIcon = TICKET_CATEGORIES[ticket.category].icon; return <CatIcon className="w-4 h-4" />; })()}
+                                    {TICKET_CATEGORIES[ticket.category].label}
+                                  </span>
+                                </div>
+                                {ticket.site && <p className="text-muted-foreground flex items-center gap-1"><MapPin className="w-4 h-4" /> {ticket.site}</p>}
+                                {ticket.technicien && <p className="text-muted-foreground flex items-center gap-1"><User className="w-4 h-4" /> {ticket.technicien}</p>}
+                                <p className="text-muted-foreground text-xs">{format(ticket.createdAt, 'dd/MM/yyyy HH:mm')}</p>
+                              </div>
+                              <div className="flex items-center gap-1 mt-3 pt-3 border-t dark:border-slate-700" onClick={(e) => e.stopPropagation()}>
+                                <Button variant="ghost" size="sm" className="h-8 px-2 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-blue-600 dark:text-blue-400" onClick={() => { setSelectedTicket(ticket); setTicketDetailOpen(true); }}>
+                                  <Eye className="w-4 h-4 mr-1" /> Voir
+                                </Button>
+                                <Button variant="ghost" size="sm" className="h-8 px-2 hover:bg-yellow-100 dark:hover:bg-yellow-900/40 text-yellow-600 dark:text-yellow-400" onClick={() => { setEditingTicket(ticket); setEditTicketOpen(true); }}>
+                                  <Edit className="w-4 h-4 mr-1" /> Modifier
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                    </div>
+                  )}
+                </motion.div>
+              )}
+
+              {/* Dialog Détail Ticket */}
+              <Dialog open={ticketDetailOpen} onOpenChange={setTicketDetailOpen}>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-slate-900 border-2 dark:border-slate-700">
+                  {selectedTicket && (
+                    <>
+                      <DialogHeader>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <DialogTitle className="text-xl flex items-center gap-2">
+                              <span className="font-mono text-cyan-600 dark:text-cyan-400">{selectedTicket.numero}</span>
+                              <Badge className={`${TICKET_STATUSES[selectedTicket.status].bgColor} ${TICKET_STATUSES[selectedTicket.status].color} font-semibold`}>
+                                {TICKET_STATUSES[selectedTicket.status].label}
+                              </Badge>
+                            </DialogTitle>
+                            <DialogDescription className="text-base text-foreground mt-1">{selectedTicket.objet}</DialogDescription>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button variant="outline" size="sm" className="border-2 dark:border-slate-600" onClick={() => { setEditingTicket(selectedTicket); setEditTicketOpen(true); setTicketDetailOpen(false); }}>
+                              <Edit className="w-4 h-4 mr-1" /> Modifier
+                            </Button>
+                            <Button variant="outline" size="sm" className="border-2 border-red-300 dark:border-red-700 text-red-600 dark:text-red-400" onClick={() => {
+                              setTickets(prev => prev.map(t => t.id === selectedTicket.id ? { ...t, isDeleted: true, deletedAt: new Date(), deletedBy: user?.name } : t));
+                              setTicketDetailOpen(false);
+                              toast.success('Ticket déplacé dans la corbeille');
+                            }}>
+                              <Trash2 className="w-4 h-4 mr-1" /> Supprimer
+                            </Button>
+                          </div>
+                        </div>
+                      </DialogHeader>
+
+                      <Tabs defaultValue="details" className="w-full">
+                        <TabsList className="grid w-full grid-cols-5 bg-slate-100 dark:bg-slate-800">
+                          <TabsTrigger value="details" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">Détails</TabsTrigger>
+                          <TabsTrigger value="comments" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">Commentaires ({selectedTicket.comments.length})</TabsTrigger>
+                          <TabsTrigger value="attachments" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">Pièces ({selectedTicket.attachments.length})</TabsTrigger>
+                          <TabsTrigger value="history" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">Historique</TabsTrigger>
+                          <TabsTrigger value="resolution" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">Résolution</TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="details" className="space-y-4 mt-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <Card className="border dark:border-slate-700">
+                              <CardHeader className="pb-2"><CardTitle className="text-sm">Informations générales</CardTitle></CardHeader>
+                              <CardContent className="space-y-2 text-sm">
+                                <p><span className="font-medium text-muted-foreground">Priorité:</span> <Badge className={`${TICKET_PRIORITIES[selectedTicket.priority].bgColor} ${TICKET_PRIORITIES[selectedTicket.priority].color}`}>{TICKET_PRIORITIES[selectedTicket.priority].label}</Badge></p>
+                                <p><span className="font-medium text-muted-foreground">Catégorie:</span> <span className="inline-flex items-center gap-1">{(() => { const CatIcon = TICKET_CATEGORIES[selectedTicket.category].icon; return <CatIcon className="w-4 h-4" />; })()} {TICKET_CATEGORIES[selectedTicket.category].label}</span></p>
+                                <p><span className="font-medium text-muted-foreground">Site:</span> {selectedTicket.site || '-'}</p>
+                                <p><span className="font-medium text-muted-foreground">Localité:</span> {selectedTicket.localite || '-'}</p>
+                                <p><span className="font-medium text-muted-foreground">Technicien:</span> {selectedTicket.technicien || '-'}</p>
+                              </CardContent>
+                            </Card>
+                            <Card className="border dark:border-slate-700">
+                              <CardHeader className="pb-2"><CardTitle className="text-sm">Dates</CardTitle></CardHeader>
+                              <CardContent className="space-y-2 text-sm">
+                                <p><span className="font-medium text-muted-foreground">Créé le:</span> {format(selectedTicket.createdAt, 'dd/MM/yyyy à HH:mm')}</p>
+                                <p><span className="font-medium text-muted-foreground">Par:</span> {selectedTicket.reporterName}</p>
+                                <p><span className="font-medium text-muted-foreground">Mis à jour:</span> {format(selectedTicket.updatedAt, 'dd/MM/yyyy à HH:mm')}</p>
+                                {selectedTicket.resolvedAt && <p><span className="font-medium text-muted-foreground">Résolu le:</span> {format(selectedTicket.resolvedAt, 'dd/MM/yyyy à HH:mm')}</p>}
+                              </CardContent>
+                            </Card>
+                          </div>
+                          <Card className="border dark:border-slate-700">
+                            <CardHeader className="pb-2"><CardTitle className="text-sm">Description</CardTitle></CardHeader>
+                            <CardContent>
+                              <p className="whitespace-pre-wrap text-foreground">{selectedTicket.description || 'Aucune description'}</p>
+                            </CardContent>
+                          </Card>
+                        </TabsContent>
+
+                        <TabsContent value="comments" className="space-y-4 mt-4">
+                          <div className="flex items-center gap-2 mb-4">
+                            <Switch checked={isPrivateComment} onCheckedChange={setIsPrivateComment} />
+                            <Label className="text-sm flex items-center gap-1">{isPrivateComment ? <><Lock className="w-4 h-4" /> Commentaire privé</> : <><Eye className="w-4 h-4" /> Commentaire public</>}</Label>
+                          </div>
+                          <div className="flex gap-2">
+                            <Textarea
+                              value={newTicketComment}
+                              onChange={(e) => setNewTicketComment(e.target.value)}
+                              placeholder="Ajouter un commentaire..."
+                              className="flex-1 border-2 dark:border-slate-600 dark:bg-slate-800"
+                            />
+                            <Button className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white" onClick={() => {
+                              if (!newTicketComment.trim()) return;
+                              const comment: TicketComment = {
+                                id: generateId(),
+                                ticketId: selectedTicket.id,
+                                userId: user?.id || '',
+                                userName: user?.name || '',
+                                content: newTicketComment,
+                                isPrivate: isPrivateComment,
+                                createdAt: new Date()
+                              };
+                              setTickets(prev => prev.map(t => t.id === selectedTicket.id ? { ...t, comments: [...t.comments, comment] } : t));
+                              setSelectedTicket(prev => prev ? { ...prev, comments: [...prev.comments, comment] } : null);
+                              setNewTicketComment('');
+                              toast.success('Commentaire ajouté');
+                            }}>
+                              <Send className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          <ScrollArea className="h-[300px]">
+                            <div className="space-y-3">
+                              {selectedTicket.comments.length === 0 && (
+                                <p className="text-center text-muted-foreground py-8">Aucun commentaire</p>
+                              )}
+                              {selectedTicket.comments.map(comment => (
+                                <div key={comment.id} className={`p-3 rounded-lg border ${comment.isPrivate ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`}>
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-medium text-foreground">{comment.userName}</span>
+                                      {comment.isPrivate && <Badge variant="outline" className="text-xs border-yellow-400 text-yellow-600 dark:text-yellow-400">Privé</Badge>}
+                                    </div>
+                                    <span className="text-xs text-muted-foreground">{format(comment.createdAt, 'dd/MM/yyyy HH:mm')}</span>
+                                  </div>
+                                  <p className="text-foreground">{comment.content}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </ScrollArea>
+                        </TabsContent>
+
+                        <TabsContent value="attachments" className="space-y-4 mt-4">
+                          <div className="border-2 border-dashed dark:border-slate-600 rounded-lg p-8 text-center hover:border-cyan-500 transition-colors cursor-pointer">
+                            <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                            <p className="text-muted-foreground">Glissez-déposez vos fichiers ici ou cliquez pour parcourir</p>
+                            <p className="text-xs text-muted-foreground mt-1">PDF, Images, Documents (max 10MB)</p>
+                          </div>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {selectedTicket.attachments.length === 0 && (
+                              <p className="col-span-full text-center text-muted-foreground py-4">Aucune pièce jointe</p>
+                            )}
+                            {selectedTicket.attachments.map(att => (
+                              <div key={att.id} className="p-3 border rounded-lg dark:border-slate-700 flex items-center gap-2 bg-slate-50 dark:bg-slate-800">
+                                <File className="w-5 h-5 text-cyan-500" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium truncate text-foreground">{att.fileName}</p>
+                                  <p className="text-xs text-muted-foreground">{(att.fileSize / 1024).toFixed(1)} KB</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </TabsContent>
+
+                        <TabsContent value="history" className="space-y-4 mt-4">
+                          <ScrollArea className="h-[300px]">
+                            <div className="relative">
+                              <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-border" />
+                              <div className="space-y-4">
+                                {selectedTicket.history.map((entry, index) => (
+                                  <div key={entry.id} className="relative pl-8">
+                                    <div className="absolute left-1.5 top-2 w-4 h-4 rounded-full bg-cyan-500 border-2 border-white dark:border-slate-900" />
+                                    <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border dark:border-slate-700">
+                                      <div className="flex items-center justify-between">
+                                        <span className="font-medium text-foreground">{entry.action}</span>
+                                        <span className="text-xs text-muted-foreground">{format(entry.timestamp, 'dd/MM/yyyy HH:mm')}</span>
+                                      </div>
+                                      <p className="text-sm text-muted-foreground">par {entry.userName}</p>
+                                      {entry.field && (
+                                        <p className="text-sm text-muted-foreground mt-1">
+                                          {entry.oldValue && <span className="line-through">{entry.oldValue}</span>}
+                                          {entry.oldValue && entry.newValue && ' → '}
+                                          {entry.newValue && <span className="font-medium">{entry.newValue}</span>}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </ScrollArea>
+                        </TabsContent>
+
+                        <TabsContent value="resolution" className="space-y-4 mt-4">
+                          <Card className="border dark:border-slate-700">
+                            <CardHeader className="pb-2"><CardTitle className="text-sm">Résolution du ticket</CardTitle></CardHeader>
+                            <CardContent className="space-y-4">
+                              <Textarea placeholder="Décrivez la résolution du problème..." rows={4} className="border-2 dark:border-slate-600 dark:bg-slate-800" />
+                              <div className="flex gap-2">
+                                <Button className="bg-green-500 hover:bg-green-600 text-white" onClick={() => {
+                                  setTickets(prev => prev.map(t => t.id === selectedTicket.id ? { ...t, status: 'resolved' as TicketStatus, resolvedAt: new Date() } : t));
+                                  setSelectedTicket(prev => prev ? { ...prev, status: 'resolved', resolvedAt: new Date() } : null);
+                                  toast.success('Ticket marqué comme résolu');
+                                }}>
+                                  <CheckCircle2 className="w-4 h-4 mr-2" /> Marquer résolu
+                                </Button>
+                                <Button variant="outline" className="border-2" onClick={() => {
+                                  setTickets(prev => prev.map(t => t.id === selectedTicket.id ? { ...t, status: 'closed' as TicketStatus, closedAt: new Date() } : t));
+                                  setSelectedTicket(prev => prev ? { ...prev, status: 'closed', closedAt: new Date() } : null);
+                                  toast.success('Ticket fermé');
+                                }}>
+                                  Fermer le ticket
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </TabsContent>
+                      </Tabs>
+                    </>
+                  )}
+                </DialogContent>
+              </Dialog>
+
+              {/* Dialog Modifier Ticket */}
+              <Dialog open={editTicketOpen} onOpenChange={setEditTicketOpen}>
+                <DialogContent className="max-w-2xl bg-white dark:bg-slate-900 border-2 dark:border-slate-700">
+                  <DialogHeader>
+                    <DialogTitle className="text-foreground">Modifier le ticket</DialogTitle>
+                  </DialogHeader>
+                  {editingTicket && (
+                    <div className="grid gap-4 py-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                          <Label className="text-foreground font-medium">Objet</Label>
+                          <Input
+                            value={editingTicket.objet}
+                            onChange={(e) => setEditingTicket({ ...editingTicket, objet: e.target.value })}
+                            className="border-2 dark:border-slate-600 dark:bg-slate-800"
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label className="text-foreground font-medium">Statut</Label>
+                          <Select value={editingTicket.status} onValueChange={(v: TicketStatus) => setEditingTicket({ ...editingTicket, status: v })}>
+                            <SelectTrigger className="border-2 dark:border-slate-600 dark:bg-slate-800">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-white dark:bg-slate-800">
+                              {Object.entries(TICKET_STATUSES).map(([key, val]) => (
+                                <SelectItem key={key} value={key}>{val.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="grid gap-2">
+                          <Label className="text-foreground font-medium">Priorité</Label>
+                          <Select value={editingTicket.priority} onValueChange={(v: TicketPriority) => setEditingTicket({ ...editingTicket, priority: v })}>
+                            <SelectTrigger className="border-2 dark:border-slate-600 dark:bg-slate-800">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-white dark:bg-slate-800">
+                              {Object.entries(TICKET_PRIORITIES).map(([key, val]) => (
+                                <SelectItem key={key} value={key}>{val.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="grid gap-2">
+                          <Label className="text-foreground font-medium">Site</Label>
+                          <Select value={editingTicket.site} onValueChange={(v) => setEditingTicket({ ...editingTicket, site: v })}>
+                            <SelectTrigger className="border-2 dark:border-slate-600 dark:bg-slate-800">
+                              <SelectValue placeholder="Sélectionner" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-white dark:bg-slate-800">
+                              {SITES_LIST.map(site => (
+                                <SelectItem key={site} value={site}>{site}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="grid gap-2">
+                          <Label className="text-foreground font-medium">Technicien</Label>
+                          <Input
+                            value={editingTicket.technicien}
+                            onChange={(e) => setEditingTicket({ ...editingTicket, technicien: e.target.value })}
+                            className="border-2 dark:border-slate-600 dark:bg-slate-800"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid gap-2">
+                        <Label className="text-foreground font-medium">Description</Label>
+                        <Textarea
+                          value={editingTicket.description}
+                          onChange={(e) => setEditingTicket({ ...editingTicket, description: e.target.value })}
+                          rows={3}
+                          className="border-2 dark:border-slate-600 dark:bg-slate-800"
+                        />
+                      </div>
+                    </div>
+                  )}
+                  <DialogFooter>
+                    <Button variant="outline" className="border-2" onClick={() => setEditTicketOpen(false)}>Annuler</Button>
+                    <Button className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white" onClick={() => {
+                      if (editingTicket) {
+                        setTickets(prev => prev.map(t => t.id === editingTicket.id ? { ...editingTicket, updatedAt: new Date() } : t));
+                        setEditTicketOpen(false);
+                        toast.success('Ticket modifié');
+                      }
+                    }}>
+                      Sauvegarder
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+
               {/* Gmail Clone - Messagerie Interne */}
               {currentTab === 'messagerie' && (
                 <motion.div key="messagerie" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="h-[calc(100vh-7rem)]">
@@ -9362,205 +9413,6 @@ export default function NOCActivityApp() {
                 </motion.div>
               )}
               
-              {/* GED - Gestion Électronique des Documents */}
-              {currentTab === 'ged' && (
-                <motion.div key="ged" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-4">
-                  {/* Header */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                      <h1 className="text-2xl lg:text-3xl font-bold flex items-center gap-2">
-                        <FileText className="w-7 h-7" /> GED - Documents
-                      </h1>
-                      <p className="text-muted-foreground">Gestion Électronique des Documents</p>
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Button variant="outline" onClick={() => setGedImportDialogOpen(true)}>
-                        <Upload className="w-4 h-4 mr-2" /> Importer
-                      </Button>
-                      <Button variant="outline" onClick={() => setGedStatsDialogOpen(true)}>
-                        <TrendingUp className="w-4 h-4 mr-2" /> Stats
-                      </Button>
-                      <Button onClick={() => setGedCreateDialogOpen(true)}>
-                        <Plus className="w-4 h-4 mr-2" /> Nouveau
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  {/* Quick Stats */}
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                    <Card className="p-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Total</span>
-                        <Badge variant="outline">{gedDocuments.length}</Badge>
-                      </div>
-                    </Card>
-                    <Card className="p-3 border-yellow-200">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">En attente</span>
-                        <Badge className="bg-yellow-500">{gedDocuments.filter(d => d.status === 'en_attente').length}</Badge>
-                      </div>
-                    </Card>
-                    <Card className="p-3 border-red-200">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Urgents</span>
-                        <Badge className="bg-red-500">{gedDocuments.filter(d => d.status === 'urgent' || d.priority === 'critique').length}</Badge>
-                      </div>
-                    </Card>
-                    <Card className="p-3 border-green-200">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Signés</span>
-                        <Badge className="bg-green-500">{gedDocuments.filter(d => d.status === 'signe').length}</Badge>
-                      </div>
-                    </Card>
-                    <Card className="p-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Approuvés</span>
-                        <Badge className="bg-blue-500">{gedDocuments.filter(d => d.status === 'approuve').length}</Badge>
-                      </div>
-                    </Card>
-                  </div>
-                  
-                  {/* Filters */}
-                  <Card>
-                    <CardContent className="p-3">
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <div className="flex-1 relative">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input
-                            placeholder="Rechercher un document..."
-                            value={gedSearchQuery}
-                            onChange={(e) => setGedSearchQuery(e.target.value)}
-                            className="pl-9"
-                          />
-                        </div>
-                        <Select value={gedFilterType} onValueChange={(v) => setGedFilterType(v as GEDDocumentType | 'all')}>
-                          <SelectTrigger className="w-full sm:w-[180px]">
-                            <SelectValue placeholder="Type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">Tous les types</SelectItem>
-                            {Object.entries(GED_TYPE_CONFIG).map(([key, config]) => (
-                              <SelectItem key={key} value={key}>{config.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Select value={gedFilterStatus} onValueChange={(v) => setGedFilterStatus(v as GEDDocumentStatus | 'all')}>
-                          <SelectTrigger className="w-full sm:w-[150px]">
-                            <SelectValue placeholder="Statut" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">Tous</SelectItem>
-                            {Object.entries(GED_STATUS_CONFIG).map(([key, config]) => (
-                              <SelectItem key={key} value={key}>{config.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                  {/* Document List */}
-                  <Card>
-                    <CardHeader className="pb-2 pt-4">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <FileText className="w-5 h-5" />
-                        Documents ({gedDocuments.length})
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="pb-4">
-                      <ScrollArea className="h-[400px]">
-                        {gedDocuments.length === 0 ? (
-                          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                            <FileText className="w-16 h-16 mb-4 opacity-50" />
-                            <p>Aucun document</p>
-                            <Button variant="outline" className="mt-4" onClick={() => setGedCreateDialogOpen(true)}>
-                              <Plus className="w-4 h-4 mr-2" /> Créer un document
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="space-y-2">
-                            {gedDocuments
-                              .filter(doc => {
-                                if (gedFilterType !== 'all' && doc.type !== gedFilterType) return false;
-                                if (gedFilterStatus !== 'all' && doc.status !== gedFilterStatus) return false;
-                                if (gedSearchQuery) {
-                                  const query = gedSearchQuery.toLowerCase();
-                                  return doc.title.toLowerCase().includes(query) ||
-                                         doc.tags.some(t => t.toLowerCase().includes(query));
-                                }
-                                return true;
-                              })
-                              .map((doc) => (
-                                <div
-                                  key={doc.id}
-                                  className="flex items-start gap-3 p-4 rounded-lg border-2 hover:bg-muted/50 cursor-pointer"
-                                  onClick={() => { setGedSelectedDocument(doc); setGedDocumentDetailOpen(true); }}
-                                >
-                                  <GEDTypeIcon type={doc.type} className="w-6 h-6 mt-1" />
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <span className="font-medium">{doc.title}</span>
-                                      <Badge className={getGEDStatusColor(doc.status)}>
-                                        {GED_STATUS_CONFIG[doc.status]?.label}
-                                      </Badge>
-                                      <Badge className={getGEDPriorityColor(doc.priority)}>
-                                        {GED_PRIORITY_CONFIG[doc.priority]?.label}
-                                      </Badge>
-                                    </div>
-                                    <p className="text-sm text-muted-foreground mt-1 truncate">
-                                      {doc.content?.substring(0, 100) || 'Aucun contenu'}
-                                    </p>
-                                    <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                                      <span>Par {doc.author.name}</span>
-                                      <span>•</span>
-                                      <span>{format(doc.createdAt, 'dd/MM/yyyy HH:mm')}</span>
-                                      {doc.linkedToZoho && doc.zohoTicketId && (
-                                        <>
-                                          <span>•</span>
-                                          <span className="text-blue-600">Zoho #{doc.zohoTicketId}</span>
-                                        </>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-1">
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={(e) => { e.stopPropagation(); setGedSelectedDocument(doc); setGedSignatureDialogOpen(true); }}
-                                    >
-                                      <PenTool className="w-4 h-4" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={(e) => { e.stopPropagation(); setGedSelectedDocument(doc); setGedWorkflowDialogOpen(true); }}
-                                    >
-                                      <Send className="w-4 h-4" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="text-red-500"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setGedDocuments(prev => prev.filter(d => d.id !== doc.id));
-                                        setGedTrashDocuments(prev => [...prev, doc]);
-                                        toast.success('Document déplacé vers la corbeille');
-                                      }}
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                  </div>
-                                </div>
-                              ))}
-                          </div>
-                        )}
-                      </ScrollArea>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              )}
-              
               {/* Supervision */}
               {currentTab === 'supervision' && (user?.role === 'RESPONSABLE' || user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
                 <motion.div key="supervision" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-4">
@@ -9953,10 +9805,10 @@ export default function NOCActivityApp() {
                     <SelectValue placeholder="Sélectionner une fonction" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="CALL_CENTER">📞 Call Center</SelectItem>
-                    <SelectItem value="MONITORING">📊 Monitoring</SelectItem>
-                    <SelectItem value="REPORTING_1">📈 Reporting 1</SelectItem>
-                    <SelectItem value="REPORTING_2">📋 Reporting 2</SelectItem>
+                    <SelectItem value="CALL_CENTER"><div className="flex items-center gap-2"><Phone className="w-4 h-4" /> Call Center</div></SelectItem>
+                    <SelectItem value="MONITORING"><div className="flex items-center gap-2"><Activity className="w-4 h-4" /> Monitoring</div></SelectItem>
+                    <SelectItem value="REPORTING_1"><div className="flex items-center gap-2"><TrendingUp className="w-4 h-4" /> Reporting 1</div></SelectItem>
+                    <SelectItem value="REPORTING_2"><div className="flex items-center gap-2"><ClipboardList className="w-4 h-4" /> Reporting 2</div></SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -10234,41 +10086,30 @@ export default function NOCActivityApp() {
           </Dialog>
         )}
 
-        {/* Dialog Composition Email - Style Gmail Exact */}
+        {/* Dialog Composition Email - Style Gmail */}
         <Dialog open={composeOpen} onOpenChange={setComposeOpen}>
-          <DialogContent className="sm:max-w-[600px] p-0 gap-0 overflow-hidden">
-            {/* Header - Style Gmail */}
-            <div className="flex items-center justify-between px-4 py-2 bg-[#404040] text-white">
-              <h3 className="font-medium text-sm">Nouveau message</h3>
+          <DialogContent className="sm:max-w-[700px] p-0 gap-0">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 bg-slate-100 dark:bg-slate-800 rounded-t-lg">
+              <h3 className="font-medium">Nouveau message</h3>
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-white hover:bg-white/10">
-                  <Minimize2 className="w-4 h-4" />
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Paperclip className="w-4 h-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-white hover:bg-white/10">
-                  <Maximize2 className="w-4 h-4" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-white hover:bg-white/10" onClick={() => setComposeOpen(false)}>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setComposeOpen(false)}>
                   <X className="w-4 h-4" />
                 </Button>
               </div>
             </div>
             
-            {/* Form Container with scroll */}
-            <div className="max-h-[400px] overflow-y-auto">
+            {/* Form */}
+            <div className="p-4 space-y-3">
               {/* To field */}
-              <div className="flex items-center px-4 py-2 border-b min-h-[40px]">
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <span>De:</span>
-                  <span className="text-gray-700 dark:text-gray-300">{user?.email || 'moi@siliconeconnect.com'}</span>
-                </div>
-              </div>
-              
-              {/* To field */}
-              <div className="flex items-center px-4 py-2 border-b min-h-[40px]">
-                <span className="text-sm text-gray-500 w-8">À:</span>
-                <div className="flex-1 flex flex-wrap items-center gap-1">
+              <div className="flex items-center border-b pb-2">
+                <span className="text-sm text-slate-500 w-12">À:</span>
+                <div className="flex-1 flex flex-wrap gap-1">
                   {newEmail.to.map((recipient, index) => (
-                    <span key={index} className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-sm">
+                    <span key={index} className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm">
                       {recipient.name}
                       <button onClick={() => setNewEmail(prev => ({...prev, to: prev.to.filter((_, i) => i !== index)}))}>
                         <X className="w-3 h-3" />
@@ -10280,31 +10121,62 @@ export default function NOCActivityApp() {
                     value={toInput}
                     onChange={(e) => setToInput(e.target.value)}
                     onFocus={() => setShowSuggestions('to')}
-                    className="flex-1 outline-none text-sm bg-transparent min-w-[150px]"
-                    placeholder=""
+                    className="flex-1 outline-none text-sm bg-transparent"
+                    placeholder={newEmail.to.length === 0 ? "Rechercher un destinataire..." : ""}
                   />
                 </div>
                 <button 
                   onClick={() => setShowCc(!showCc)}
-                  className={`text-sm px-2 py-1 rounded ${showCc ? 'text-blue-700 bg-blue-50' : 'text-blue-600 hover:bg-blue-50'}`}
+                  className="text-sm text-blue-600 hover:underline ml-2"
                 >
                   Cc
                 </button>
-                <button 
-                  onClick={() => setShowBcc(!showBcc)}
-                  className={`text-sm px-2 py-1 rounded ${showBcc ? 'text-blue-700 bg-blue-50' : 'text-blue-600 hover:bg-blue-50'}`}
-                >
-                  Cci
-                </button>
               </div>
+              
+              {/* Suggestions */}
+              {showSuggestions && toInput && (
+                <div className="border rounded-lg bg-white dark:bg-slate-900 shadow-lg max-h-40 overflow-auto">
+                  {Object.values(DEMO_USERS)
+                    .filter(u => 
+                      u.name.toLowerCase().includes(toInput.toLowerCase()) ||
+                      u.email.toLowerCase().includes(toInput.toLowerCase())
+                    )
+                    .filter(u => !newEmail.to.some(t => t.id === u.id))
+                    .slice(0, 5)
+                    .map((u) => (
+                      <button
+                        key={u.id}
+                        onClick={() => {
+                          setNewEmail(prev => ({
+                            ...prev,
+                            to: [...prev.to, { id: u.id, name: u.name, email: u.email }]
+                          }));
+                          setToInput('');
+                          setShowSuggestions(null);
+                        }}
+                        className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-left"
+                      >
+                        <Avatar className="w-6 h-6">
+                          <AvatarFallback className="text-xs bg-blue-600 text-white">
+                            {u.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="text-sm font-medium">{u.name}</div>
+                          <div className="text-xs text-slate-500">{u.email}</div>
+                        </div>
+                      </button>
+                    ))}
+                </div>
+              )}
               
               {/* Cc field */}
               {showCc && (
-                <div className="flex items-center px-4 py-2 border-b min-h-[40px]">
-                  <span className="text-sm text-gray-500 w-8">Cc:</span>
-                  <div className="flex-1 flex flex-wrap items-center gap-1">
+                <div className="flex items-center border-b pb-2">
+                  <span className="text-sm text-slate-500 w-12">Cc:</span>
+                  <div className="flex-1 flex flex-wrap gap-1">
                     {newEmail.cc.map((recipient, index) => (
-                      <span key={index} className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-sm">
+                      <span key={index} className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm">
                         {recipient.name}
                         <button onClick={() => setNewEmail(prev => ({...prev, cc: prev.cc.filter((_, i) => i !== index)}))}>
                           <X className="w-3 h-3" />
@@ -10315,1157 +10187,202 @@ export default function NOCActivityApp() {
                       type="text"
                       value={ccInput}
                       onChange={(e) => setCcInput(e.target.value)}
-                      className="flex-1 outline-none text-sm bg-transparent min-w-[150px]"
-                      placeholder=""
-                    />
-                  </div>
-                </div>
-              )}
-              
-              {/* Bcc (Cci) field */}
-              {showBcc && (
-                <div className="flex items-center px-4 py-2 border-b min-h-[40px]">
-                  <span className="text-sm text-gray-500 w-8">Cci:</span>
-                  <div className="flex-1 flex flex-wrap items-center gap-1">
-                    {newEmail.bcc.map((recipient, index) => (
-                      <span key={index} className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-sm">
-                        {recipient.name}
-                        <button onClick={() => setNewEmail(prev => ({...prev, bcc: prev.bcc.filter((_, i) => i !== index)}))}>
-                          <X className="w-3 h-3" />
-                        </button>
-                      </span>
-                    ))}
-                    <input
-                      type="text"
-                      value={bccInput}
-                      onChange={(e) => setBccInput(e.target.value)}
-                      className="flex-1 outline-none text-sm bg-transparent min-w-[150px]"
-                      placeholder=""
+                      onFocus={() => setShowSuggestions('cc')}
+                      className="flex-1 outline-none text-sm bg-transparent"
+                      placeholder={newEmail.cc.length === 0 ? "Ajouter Cc..." : ""}
                     />
                   </div>
                 </div>
               )}
               
               {/* Subject */}
-              <div className="flex items-center px-4 py-2 border-b min-h-[40px]">
-                <span className="text-sm text-gray-500 w-16">Objet:</span>
+              <div className="flex items-center border-b pb-2">
+                <span className="text-sm text-slate-500 w-12">Objet:</span>
                 <input
                   type="text"
                   value={newEmail.subject}
                   onChange={(e) => setNewEmail(prev => ({...prev, subject: e.target.value}))}
                   className="flex-1 outline-none text-sm bg-transparent"
-                  placeholder="(sans objet)"
+                  placeholder="Objet du message"
                 />
               </div>
               
-              {/* Rich Text Editor Toolbar */}
-              <div className="flex items-center gap-0.5 px-4 py-1 border-b bg-gray-50 dark:bg-gray-900 flex-wrap">
-                {/* Font Family */}
-                <Select value={editorFontFamily} onValueChange={setEditorFontFamily}>
-                  <SelectTrigger className="h-7 w-24 text-xs border-0 bg-transparent">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Arial">Arial</SelectItem>
-                    <SelectItem value="Georgia">Georgia</SelectItem>
-                    <SelectItem value="Times New Roman">Times</SelectItem>
-                    <SelectItem value="Courier New">Courier</SelectItem>
-                    <SelectItem value="Verdana">Verdana</SelectItem>
-                  </SelectContent>
-                </Select>
-                
-                {/* Font Size */}
-                <Select value={editorFontSize} onValueChange={setEditorFontSize}>
-                  <SelectTrigger className="h-7 w-16 text-xs border-0 bg-transparent">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">Petit</SelectItem>
-                    <SelectItem value="3">Normal</SelectItem>
-                    <SelectItem value="5">Grand</SelectItem>
-                    <SelectItem value="7">Très grand</SelectItem>
-                  </SelectContent>
-                </Select>
-                
-                <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
-                
-                {/* Bold */}
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className={`h-7 w-7 p-0 ${editorFormats.bold ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
-                  onClick={() => formatText('bold')}
-                >
-                  <Bold className="w-4 h-4" />
-                </Button>
-                
-                {/* Italic */}
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className={`h-7 w-7 p-0 ${editorFormats.italic ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
-                  onClick={() => formatText('italic')}
-                >
-                  <Italic className="w-4 h-4" />
-                </Button>
-                
-                {/* Underline */}
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className={`h-7 w-7 p-0 ${editorFormats.underline ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
-                  onClick={() => formatText('underline')}
-                >
-                  <Underline className="w-4 h-4" />
-                </Button>
-                
-                <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
-                
-                {/* Text Color */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                      <div className="flex flex-col items-center">
-                        <span className="text-[10px] font-bold">A</span>
-                        <div className="w-4 h-1 rounded" style={{ backgroundColor: editorTextColor }} />
-                      </div>
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-48 p-2">
-                    <div className="grid grid-cols-8 gap-1">
-                      {['#000000', '#434343', '#666666', '#999999', '#b7b7b7', '#cccccc', '#d9d9d9', '#efefef',
-                        '#980000', '#ff0000', '#ff9900', '#ffff00', '#00ff00', '#00ffff', '#4a86e8', '#0000ff',
-                        '#9900ff', '#ff00ff', '#e6b8af', '#f4cccc', '#fce5cd', '#fff2cc', '#d9ead3', '#d0e0e3',
-                        '#c9daf8', '#cfe2f3', '#d9d2e9', '#ead1dc', '#dd7e6b', '#ea9999', '#f9cb9c', '#ffe599'].map((color) => (
-                        <button
-                          key={color}
-                          className="w-4 h-4 rounded border hover:scale-110 transition-transform"
-                          style={{ backgroundColor: color }}
-                          onClick={() => {
-                            setEditorTextColor(color);
-                            formatText('foreColor', color);
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-                
-                {/* Highlight Color */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                      <Highlighter className="w-4 h-4" style={{ color: editorHighlightColor }} />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-48 p-2">
-                    <div className="grid grid-cols-8 gap-1">
-                      {['#ffffff', '#c9daf8', '#fce5cd', '#fff2cc', '#d9ead3', '#d0e0e3', '#e6b8af', '#ead1dc',
-                        '#cfe2f3', '#d9d2e9', '#f4cccc', '#ffe599', '#d9ead3', '#b6d7a8', '#a2c4c9', '#b4a7d6'].map((color) => (
-                        <button
-                          key={color}
-                          className="w-4 h-4 rounded border hover:scale-110 transition-transform"
-                          style={{ backgroundColor: color }}
-                          onClick={() => {
-                            setEditorHighlightColor(color);
-                            formatText('hiliteColor', color);
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-                
-                <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
-                
-                {/* Alignment */}
-                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => formatText('justifyLeft')}>
-                  <AlignLeft className="w-4 h-4" />
-                </Button>
-                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => formatText('justifyCenter')}>
-                  <AlignCenter className="w-4 h-4" />
-                </Button>
-                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => formatText('justifyRight')}>
-                  <AlignRight className="w-4 h-4" />
-                </Button>
-                
-                <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
-                
-                {/* Lists */}
-                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => formatText('insertUnorderedList')}>
-                  <List className="w-4 h-4" />
-                </Button>
-                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => formatText('insertOrderedList')}>
-                  <ListOrdered className="w-4 h-4" />
-                </Button>
-                
-                <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
-                
-                {/* Link */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                      <LinkIcon className="w-4 h-4" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-64 p-2">
-                    <div className="space-y-2">
-                      <Input
-                        placeholder="URL du lien"
-                        value={linkUrl}
-                        onChange={(e) => setLinkUrl(e.target.value)}
-                        className="h-8"
-                      />
-                      <Button size="sm" className="w-full" onClick={() => {
-                        if (linkUrl) {
-                          formatText('createLink', linkUrl);
-                          setLinkUrl('');
-                        }
-                      }}>
-                        Insérer
-                      </Button>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-                
-                {/* Remove formatting */}
-                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => formatText('removeFormat')}>
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-              
-              {/* Body - ContentEditable */}
-              <div 
-                ref={editorRef}
-                contentEditable
-                className="min-h-[150px] p-4 outline-none text-sm leading-relaxed overflow-y-auto"
-                style={{ maxHeight: '200px', fontFamily: editorFontFamily }}
-                onInput={(e) => {
-                  setNewEmail(prev => ({...prev, body: e.currentTarget.innerHTML}));
-                }}
-                data-placeholder="Écrivez votre message..."
-                dangerouslySetInnerHTML={{ __html: newEmail.body || '' }}
+              {/* Body */}
+              <Textarea
+                value={newEmail.body}
+                onChange={(e) => setNewEmail(prev => ({...prev, body: e.target.value}))}
+                className="min-h-[200px] border-0 resize-none focus-visible:ring-0"
+                placeholder="Écrivez votre message..."
               />
               
-              {/* Attachments Preview */}
+              {/* Attachments */}
               {newEmail.attachments.length > 0 && (
-                <div className="px-4 py-2 border-t bg-gray-50 dark:bg-gray-900">
-                  <div className="flex flex-wrap gap-2">
-                    {newEmail.attachments.map((att, index) => (
-                      <div key={index} className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-gray-800 rounded-lg border text-sm">
-                        <File className="w-4 h-4 text-blue-500" />
-                        <span className="truncate max-w-[150px]">{att.fileName}</span>
-                        <span className="text-xs text-gray-400">{(att.fileSize / 1024).toFixed(1)}KB</span>
-                        <button 
-                          onClick={() => setNewEmail(prev => ({...prev, attachments: prev.attachments.filter((_, i) => i !== index)}))}
-                          className="text-gray-400 hover:text-red-500"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                <div className="flex flex-wrap gap-2 pt-2 border-t">
+                  {newEmail.attachments.map((att, index) => (
+                    <div key={index} className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                      <Paperclip className="w-4 h-4 text-slate-500" />
+                      <span className="text-sm">{att.fileName}</span>
+                      <button onClick={() => setNewEmail(prev => ({...prev, attachments: prev.attachments.filter((_, i) => i !== index)}))}>
+                        <X className="w-3 h-3 text-slate-400" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
             
-            {/* Footer Toolbar - Style Gmail */}
-            <div className="flex items-center gap-1 px-4 py-2 border-t bg-white dark:bg-gray-900">
-              {/* Send Button */}
-              <Button 
-                onClick={() => {
-                  if (newEmail.to.length === 0) {
-                    toast.error('Erreur', { description: 'Veuillez ajouter au moins un destinataire' });
-                    return;
-                  }
-                  
-                  const message: InternalMessage = {
-                    id: generateId(),
-                    from: {
-                      id: user?.id || '',
-                      name: user?.name || '',
-                      email: user?.email || ''
-                    },
-                    to: newEmail.to,
-                    cc: newEmail.cc,
-                    bcc: newEmail.bcc,
-                    subject: newEmail.subject,
-                    body: newEmail.body,
-                    attachments: newEmail.attachments,
-                    folder: 'sent',
-                    status: 'read',
-                    priority: newEmail.priority,
-                    isStarred: false,
-                    isRead: true,
-                    labels: [],
-                    sentAt: new Date(),
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                    isDraft: false
-                  };
-                  
-                  setMessages(prev => [message, ...prev]);
-                  
-                  // Reset
-                  setNewEmail({
-                    to: [],
-                    cc: [],
-                    bcc: [],
-                    subject: '',
-                    body: '',
-                    attachments: [],
-                    priority: 'normal',
-                    scheduledAt: null
-                  });
-                  setToInput('');
-                  setCcInput('');
-                  setBccInput('');
-                  if (editorRef.current) {
-                    editorRef.current.innerHTML = '';
-                  }
-                  setComposeOpen(false);
-                  
-                  toast.success('Message envoyé');
-                }}
-                className="gap-1 bg-[#0b57d0] hover:bg-[#0842a0] text-white px-4"
-              >
-                <Send className="w-4 h-4" />
-                <span>Envoyer</span>
-                <ChevronDown className="w-3 h-3 ml-1" />
-              </Button>
-              
-              {/* Formatting toggle */}
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-600 hover:bg-gray-100">
-                    <span className="font-bold underline">A</span>
-                  </Button>
-                </PopoverTrigger>
-              </Popover>
-              
-              {/* Attachment */}
-              <label className="cursor-pointer">
-                <input
-                  type="file"
-                  className="hidden"
-                  multiple
-                  onChange={(e) => {
-                    const files = e.target.files;
-                    if (files) {
-                      Array.from(files).forEach(file => {
-                        const reader = new FileReader();
-                        reader.onload = () => {
-                          const attachment: EmailAttachment = {
-                            id: generateId(),
-                            messageId: '',
-                            fileName: file.name,
-                            fileSize: file.size,
-                            fileType: file.type,
-                            fileData: reader.result as string,
-                            uploadedAt: new Date()
-                          };
-                          setNewEmail(prev => ({
-                            ...prev,
-                            attachments: [...prev.attachments, attachment]
-                          }));
-                        };
-                        reader.readAsDataURL(file);
-                      });
+            {/* Footer */}
+            <div className="flex items-center justify-between px-4 py-3 border-t bg-slate-50 dark:bg-slate-900/50 rounded-b-lg">
+              <div className="flex items-center gap-2">
+                <Button 
+                  onClick={() => {
+                    if (newEmail.to.length === 0) {
+                      toast.error('Erreur', { description: 'Veuillez ajouter au moins un destinataire' });
+                      return;
                     }
-                  }}
-                />
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-600 hover:bg-gray-100" type="button">
-                  <Paperclip className="w-5 h-5" />
-                </Button>
-              </label>
-              
-              {/* Link */}
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-600 hover:bg-gray-100">
-                <LinkIcon className="w-5 h-5" />
-              </Button>
-              
-              {/* Emoji */}
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-600 hover:bg-gray-100">
-                    <Smile className="w-5 h-5" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-72 p-2">
-                  <div className="grid grid-cols-8 gap-1">
-                    {['😀', '😂', '😍', '🥰', '😎', '🤔', '👍', '👎', '❤️', '🔥', '🎉', '✅', '⏰', '📞', '📧', '💻', '🔧', '📊', '📈', '✨', '🌟', '💪', '🙏', '👋'].map((emoji) => (
-                      <button
-                        key={emoji}
-                        className="text-xl hover:bg-gray-100 rounded p-1"
-                        onClick={() => {
-                          if (editorRef.current) {
-                            editorRef.current.focus();
-                            document.execCommand('insertText', false, emoji);
-                          }
-                        }}
-                      >
-                        {emoji}
-                      </button>
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
-              
-              {/* Google Drive */}
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-600 hover:bg-gray-100">
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12.01 1.485c-2.082 0-3.754.02-3.743.047.01.02 1.708 3.001 3.774 6.62l3.76 6.574h3.76c2.081 0 3.753-.02 3.742-.047-.005-.02-1.708-3.001-3.775-6.62l-3.76-6.574h-3.758zm-5.735 1.04l-6.27 10.89 1.88 3.298 1.88 3.297h3.77l-1.893-3.297-1.893-3.298 4.38-7.59 2.19-3.8h-.005c-1.15 0-2.59.02-4.04.05z"/>
-                </svg>
-              </Button>
-              
-              {/* Photo */}
-              <label className="cursor-pointer">
-                <input type="file" className="hidden" accept="image/*" multiple onChange={(e) => {
-                  const files = e.target.files;
-                  if (files) {
-                    Array.from(files).forEach(file => {
-                      const reader = new FileReader();
-                      reader.onload = () => {
-                        const attachment: EmailAttachment = {
-                          id: generateId(),
-                          messageId: '',
-                          fileName: file.name,
-                          fileSize: file.size,
-                          fileType: file.type,
-                          fileData: reader.result as string,
-                          uploadedAt: new Date()
-                        };
-                        setNewEmail(prev => ({
-                          ...prev,
-                          attachments: [...prev.attachments, attachment]
-                        }));
-                      };
-                      reader.readAsDataURL(file);
+                    if (!newEmail.subject.trim()) {
+                      toast.error('Erreur', { description: 'Veuillez ajouter un objet' });
+                      return;
+                    }
+                    
+                    // Create the message
+                    const message: InternalMessage = {
+                      id: generateId(),
+                      from: {
+                        id: user?.id || '',
+                        name: user?.name || '',
+                        email: user?.email || '',
+                        avatar: user?.avatar
+                      },
+                      to: newEmail.to,
+                      cc: newEmail.cc,
+                      bcc: newEmail.bcc,
+                      subject: newEmail.subject,
+                      body: newEmail.body,
+                      attachments: newEmail.attachments,
+                      folder: 'sent',
+                      status: 'read',
+                      priority: newEmail.priority,
+                      isStarred: false,
+                      isRead: true,
+                      labels: [],
+                      sentAt: new Date(),
+                      createdAt: new Date(),
+                      updatedAt: new Date(),
+                      isDraft: false
+                    };
+                    
+                    // Add to sent folder for sender
+                    setMessages(prev => [message, ...prev]);
+                    
+                    // Simulate delivery to recipients (in real app, this would be server-side)
+                    const deliveredMessage: InternalMessage = {
+                      ...message,
+                      id: generateId(),
+                      folder: 'inbox',
+                      status: 'unread',
+                      isRead: false,
+                      receivedAt: new Date()
+                    };
+                    setMessages(prev => [deliveredMessage, ...prev]);
+                    
+                    // Reset and close
+                    setNewEmail({
+                      to: [],
+                      cc: [],
+                      bcc: [],
+                      subject: '',
+                      body: '',
+                      attachments: [],
+                      priority: 'normal',
+                      scheduledAt: null
                     });
-                  }
-                }} />
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-600 hover:bg-gray-100" type="button">
-                  <ImageIcon className="w-5 h-5" />
+                    setToInput('');
+                    setCcInput('');
+                    setComposeOpen(false);
+                    
+                    toast.success('Message envoyé', { description: `Envoyé à ${newEmail.to.map(t => t.name).join(', ')}` });
+                  }}
+                  className="gap-2 bg-blue-600 hover:bg-blue-700"
+                >
+                  <Send className="w-4 h-4" /> Envoyer
                 </Button>
-              </label>
-              
-              {/* Confidential mode */}
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-600 hover:bg-gray-100">
-                <Lock className="w-5 h-5" />
-              </Button>
-              
-              {/* More options */}
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-600 hover:bg-gray-100">
-                    <MoreVertical className="w-5 h-5" />
+                
+                {/* Attachment upload */}
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    className="hidden"
+                    multiple
+                    onChange={(e) => {
+                      const files = e.target.files;
+                      if (files) {
+                        Array.from(files).forEach(file => {
+                          const reader = new FileReader();
+                          reader.onload = () => {
+                            const attachment: EmailAttachment = {
+                              id: generateId(),
+                              messageId: '',
+                              fileName: file.name,
+                              fileSize: file.size,
+                              fileType: file.type,
+                              fileData: reader.result as string,
+                              uploadedAt: new Date()
+                            };
+                            setNewEmail(prev => ({
+                              ...prev,
+                              attachments: [...prev.attachments, attachment]
+                            }));
+                          };
+                          reader.readAsDataURL(file);
+                        });
+                      }
+                    }}
+                  />
+                  <Button variant="ghost" size="icon" type="button">
+                    <Paperclip className="w-4 h-4" />
                   </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-48 p-1">
-                  <button className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded" onClick={() => setNewEmail(prev => ({...prev, priority: 'important'}))}>
-                    Marquer comme important
-                  </button>
-                  <button className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded">
-                    Demander un accusé de réception
-                  </button>
-                  <button className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded">
-                    Planifier l'envoi
-                  </button>
-                </PopoverContent>
-              </Popover>
+                </label>
+              </div>
               
-              {/* Spacer */}
-              <div className="flex-1" />
-              
-              {/* Trash / Delete draft */}
               <Button 
                 variant="ghost" 
-                size="sm" 
-                className="h-8 w-8 p-0 text-gray-600 hover:bg-gray-100"
+                size="sm"
                 onClick={() => {
-                  setNewEmail({
-                    to: [],
-                    cc: [],
-                    bcc: [],
-                    subject: '',
-                    body: '',
-                    attachments: [],
-                    priority: 'normal',
-                    scheduledAt: null
-                  });
-                  if (editorRef.current) {
-                    editorRef.current.innerHTML = '';
+                  // Save as draft
+                  if (newEmail.subject || newEmail.body || newEmail.to.length > 0) {
+                    const draft: InternalMessage = {
+                      id: generateId(),
+                      from: {
+                        id: user?.id || '',
+                        name: user?.name || '',
+                        email: user?.email || ''
+                      },
+                      to: newEmail.to,
+                      cc: newEmail.cc,
+                      bcc: newEmail.bcc,
+                      subject: newEmail.subject,
+                      body: newEmail.body,
+                      attachments: newEmail.attachments,
+                      folder: 'drafts',
+                      status: 'unread',
+                      priority: 'normal',
+                      isStarred: false,
+                      isRead: true,
+                      labels: [],
+                      createdAt: new Date(),
+                      updatedAt: new Date(),
+                      isDraft: true
+                    };
+                    setMessages(prev => [draft, ...prev]);
+                    toast.success('Brouillon sauvegardé');
                   }
                   setComposeOpen(false);
                 }}
               >
-                <Trash2 className="w-5 h-5" />
+                Enregistrer le brouillon
               </Button>
             </div>
-          </DialogContent>
-        </Dialog>
-        
-        {/* GED Document Detail Dialog */}
-        <Dialog open={gedDocumentDetailOpen} onOpenChange={setGedDocumentDetailOpen}>
-          <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-            {gedSelectedDocument && (
-              <>
-                <DialogHeader>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <DialogTitle className="flex items-center gap-2">
-                        <GEDTypeIcon type={gedSelectedDocument.type} className="w-6 h-6" />
-                        {gedSelectedDocument.title}
-                      </DialogTitle>
-                      <DialogDescription className="flex items-center gap-2 mt-1">
-                        <Badge className={getGEDStatusColor(gedSelectedDocument.status)}>
-                          {GED_STATUS_CONFIG[gedSelectedDocument.status]?.label}
-                        </Badge>
-                        <Badge className={getGEDPriorityColor(gedSelectedDocument.priority)}>
-                          {GED_PRIORITY_CONFIG[gedSelectedDocument.priority]?.label}
-                        </Badge>
-                      </DialogDescription>
-                    </div>
-                  </div>
-                </DialogHeader>
-                
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 py-4">
-                  {/* Left Column - Content */}
-                  <div className="lg:col-span-2 space-y-4">
-                    <Card>
-                      <CardHeader className="pb-2 pt-4">
-                        <CardTitle className="text-base">Contenu</CardTitle>
-                      </CardHeader>
-                      <CardContent className="pb-4">
-                        {gedSelectedDocument.content ? (
-                          <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
-                            {gedSelectedDocument.content}
-                          </div>
-                        ) : (
-                          <p className="text-muted-foreground text-sm">Aucun contenu textuel</p>
-                        )}
-                      </CardContent>
-                    </Card>
-                    
-                    {/* Workflow Timeline */}
-                    <Card>
-                      <CardHeader className="pb-2 pt-4">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <Clock3 className="w-4 h-4" /> Workflow
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="pb-4">
-                        {gedSelectedDocument.workflowHistory.length > 0 ? (
-                          <div className="relative pl-6 space-y-3">
-                            <div className="absolute left-2 top-2 bottom-2 w-0.5 bg-border" />
-                            {gedSelectedDocument.workflowHistory.map((entry) => (
-                              <div key={entry.id} className="relative">
-                                <div className={`absolute -left-5 w-3 h-3 rounded-full ${
-                                  entry.action === 'approved' || entry.action === 'signed' ? 'bg-green-500' :
-                                  entry.action === 'rejected' ? 'bg-red-500' :
-                                  'bg-blue-500'
-                                }`} />
-                                <div className="bg-muted/50 rounded-lg p-2 text-sm">
-                                  <div className="flex justify-between">
-                                    <span className="font-medium">{entry.fromUserName} → {entry.toUserName}</span>
-                                    <span className="text-xs text-muted-foreground">{format(entry.timestamp, 'dd/MM HH:mm')}</span>
-                                  </div>
-                                  <p className="text-xs text-muted-foreground mt-1">{entry.comment}</p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-muted-foreground text-sm">Aucune action</p>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </div>
-                  
-                  {/* Right Column - Actions & Info */}
-                  <div className="space-y-4">
-                    <Card>
-                      <CardHeader className="pb-2 pt-4">
-                        <CardTitle className="text-base">Actions</CardTitle>
-                      </CardHeader>
-                      <CardContent className="pb-4 space-y-2">
-                        <Button className="w-full justify-start" variant="outline" onClick={() => { setGedDocumentDetailOpen(false); setGedSignatureDialogOpen(true); }}>
-                          <PenTool className="w-4 h-4 mr-2" /> Signer
-                        </Button>
-                        <Button className="w-full justify-start" variant="outline" onClick={() => { setGedDocumentDetailOpen(false); setGedWorkflowDialogOpen(true); }}>
-                          <Send className="w-4 h-4 mr-2" /> Envoyer
-                        </Button>
-                        <Button className="w-full justify-start" variant="outline" onClick={() => { setGedDocumentDetailOpen(false); setGedSecurityDialogOpen(true); }}>
-                          <Shield className="w-4 h-4 mr-2" /> Sécuriser
-                        </Button>
-                        <Button className="w-full justify-start text-red-600" variant="outline" onClick={() => {
-                          setGedDocuments(prev => prev.filter(d => d.id !== gedSelectedDocument.id));
-                          setGedDocumentDetailOpen(false);
-                          toast.success('Document supprimé');
-                        }}>
-                          <Trash2 className="w-4 h-4 mr-2" /> Supprimer
-                        </Button>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardHeader className="pb-2 pt-4">
-                        <CardTitle className="text-base">Informations</CardTitle>
-                      </CardHeader>
-                      <CardContent className="pb-4 space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Auteur</span>
-                          <span>{gedSelectedDocument.author.name}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Créé le</span>
-                          <span>{format(gedSelectedDocument.createdAt, 'dd/MM/yyyy HH:mm')}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Version</span>
-                          <span>v{gedSelectedDocument.version}</span>
-                        </div>
-                        {gedSelectedDocument.tags.length > 0 && (
-                          <div>
-                            <span className="text-muted-foreground">Tags</span>
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {gedSelectedDocument.tags.map((tag, i) => (
-                                <Badge key={i} variant="secondary" className="text-xs">{tag}</Badge>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </div>
-                </div>
-              </>
-            )}
-          </DialogContent>
-        </Dialog>
-        
-        {/* GED Create Document Dialog */}
-        <Dialog open={gedCreateDialogOpen} onOpenChange={setGedCreateDialogOpen}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Créer un document</DialogTitle>
-              <DialogDescription>Remplissez les informations</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label>Titre *</Label>
-                <Input
-                  value={gedNewDoc.title || ''}
-                  onChange={(e) => setGedNewDoc(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="Titre du document"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Type</Label>
-                  <Select value={gedNewDoc.type || 'autre'} onValueChange={(v) => setGedNewDoc(prev => ({ ...prev, type: v as GEDDocumentType }))}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(GED_TYPE_CONFIG).map(([key, config]) => (
-                        <SelectItem key={key} value={key}>{config.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Priorité</Label>
-                  <Select value={gedNewDoc.priority || 'normale'} onValueChange={(v) => setGedNewDoc(prev => ({ ...prev, priority: v as GEDPriority }))}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(GED_PRIORITY_CONFIG).map(([key, config]) => (
-                        <SelectItem key={key} value={key}>{config.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Contenu</Label>
-                <Textarea
-                  value={gedNewDoc.content || ''}
-                  onChange={(e) => setGedNewDoc(prev => ({ ...prev, content: e.target.value }))}
-                  placeholder="Contenu du document..."
-                  className="min-h-[150px]"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  checked={gedNewDoc.linkedToZoho || false}
-                  onCheckedChange={(checked) => setGedNewDoc(prev => ({ ...prev, linkedToZoho: !!checked }))}
-                />
-                <Label>Lier à un ticket Zoho</Label>
-              </div>
-              {gedNewDoc.linkedToZoho && (
-                <Input
-                  placeholder="ID du ticket Zoho"
-                  value={gedNewDoc.zohoTicketId || ''}
-                  onChange={(e) => setGedNewDoc(prev => ({ ...prev, zohoTicketId: e.target.value }))}
-                />
-              )}
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setGedCreateDialogOpen(false)}>Annuler</Button>
-              <Button onClick={() => {
-                if (!gedNewDoc.title?.trim()) {
-                  toast.error('Erreur', { description: 'Le titre est obligatoire' });
-                  return;
-                }
-                const newDocument: GEDDocument = {
-                  id: `ged-${generateId()}`,
-                  title: gedNewDoc.title,
-                  type: gedNewDoc.type || 'autre',
-                  status: 'en_attente',
-                  priority: gedNewDoc.priority || 'normale',
-                  urgency: 'normale',
-                  currentHolder: user?.id || '',
-                  workflowStep: 1,
-                  workflowHistory: [],
-                  author: { id: user?.id || '', name: user?.name || '', role: user?.role || 'USER' },
-                  createdAt: new Date(),
-                  updatedAt: new Date(),
-                  tags: [],
-                  metadata: {},
-                  passwordProtected: false,
-                  restrictOpen: [],
-                  restrictModify: [],
-                  restrictCapture: false,
-                  restrictPrint: false,
-                  linkedToZoho: gedNewDoc.linkedToZoho || false,
-                  zohoTicketId: gedNewDoc.zohoTicketId,
-                  version: 1,
-                  versions: [],
-                  comments: [],
-                  isFollowed: true,
-                  lastViewedBy: [user?.id || ''],
-                  content: gedNewDoc.content
-                };
-                setGedDocuments(prev => [newDocument, ...prev]);
-                setGedNewDoc({
-                  title: '',
-                  type: 'autre',
-                  status: 'en_attente',
-                  priority: 'normale',
-                  urgency: 'normale',
-                  content: '',
-                  tags: [],
-                  metadata: {},
-                  passwordProtected: false,
-                  restrictOpen: [],
-                  restrictModify: [],
-                  restrictCapture: false,
-                  restrictPrint: false,
-                  linkedToZoho: false
-                });
-                setGedCreateDialogOpen(false);
-                toast.success('Document créé');
-              }}>Créer</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-        
-        {/* GED Signature Dialog */}
-        <Dialog open={gedSignatureDialogOpen} onOpenChange={setGedSignatureDialogOpen}>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Signer le document</DialogTitle>
-              <DialogDescription>Dessinez votre signature</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="border-2 border-dashed rounded-lg p-4 bg-white">
-                <canvas
-                  ref={signatureCanvasRef}
-                  width={400}
-                  height={150}
-                  className="w-full cursor-crosshair"
-                  onMouseDown={(e) => {
-                    const canvas = signatureCanvasRef.current;
-                    if (!canvas) return;
-                    const ctx = canvas.getContext('2d');
-                    if (!ctx) return;
-                    ctx.beginPath();
-                    ctx.strokeStyle = '#000';
-                    ctx.lineWidth = 2;
-                    const rect = canvas.getBoundingClientRect();
-                    ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
-                    
-                    const onMouseMove = (e: MouseEvent) => {
-                      ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
-                      ctx.stroke();
-                    };
-                    const onMouseUp = () => {
-                      canvas.removeEventListener('mousemove', onMouseMove);
-                      canvas.removeEventListener('mouseup', onMouseUp);
-                    };
-                    canvas.addEventListener('mousemove', onMouseMove);
-                    canvas.addEventListener('mouseup', onMouseUp);
-                  }}
-                />
-              </div>
-              <Button variant="outline" onClick={() => {
-                const canvas = signatureCanvasRef.current;
-                if (canvas) {
-                  const ctx = canvas.getContext('2d');
-                  if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
-                }
-              }}>Effacer</Button>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setGedSignatureDialogOpen(false)}>Annuler</Button>
-              <Button onClick={() => {
-                const canvas = signatureCanvasRef.current;
-                if (!canvas) return;
-                const signatureData = canvas.toDataURL();
-                if (gedSelectedDocument) {
-                  setGedDocuments(prev => prev.map(d => 
-                    d.id === gedSelectedDocument.id 
-                      ? { 
-                          ...d, 
-                          status: 'signe' as GEDDocumentStatus,
-                          signature: {
-                            userId: user?.id || '',
-                            userName: user?.name || '',
-                            signedAt: new Date(),
-                            signatureData
-                          }
-                        }
-                      : d
-                  ));
-                  toast.success('Document signé');
-                }
-                setGedSignatureDialogOpen(false);
-              }}>
-                <CheckCircle2 className="w-4 h-4 mr-2" /> Signer
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-        
-        {/* GED Workflow Dialog */}
-        <Dialog open={gedWorkflowDialogOpen} onOpenChange={setGedWorkflowDialogOpen}>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Envoyer le document</DialogTitle>
-              <DialogDescription>{gedSelectedDocument?.title}</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label>Action</Label>
-                <Select value={gedWorkflowAction} onValueChange={(v) => setGedWorkflowAction(v as typeof gedWorkflowAction)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="send">Envoyer</SelectItem>
-                    <SelectItem value="approve">Approuver</SelectItem>
-                    <SelectItem value="reject">Rejeter</SelectItem>
-                    <SelectItem value="suspend">Suspendre</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Destinataire</Label>
-                <Select value={gedWorkflowRecipient} onValueChange={setGedWorkflowRecipient}>
-                  <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
-                  <SelectContent>
-                    {Object.values(DEMO_USERS).filter(u => u.id !== user?.id).map(u => (
-                      <SelectItem key={u.id} value={u.id}>
-                        <div className="flex items-center gap-2">
-                          <span>{u.name}</span>
-                          <Badge variant="outline" className="text-xs">{u.role}</Badge>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Commentaire</Label>
-                <Textarea
-                  value={gedWorkflowComment}
-                  onChange={(e) => setGedWorkflowComment(e.target.value)}
-                  placeholder="Commentaire (optionnel)..."
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setGedWorkflowDialogOpen(false)}>Annuler</Button>
-              <Button onClick={() => {
-                if (!gedWorkflowRecipient) {
-                  toast.error('Erreur', { description: 'Sélectionnez un destinataire' });
-                  return;
-                }
-                if (gedSelectedDocument) {
-                  const recipient = Object.values(DEMO_USERS).find(u => u.id === gedWorkflowRecipient);
-                  const newEntry: GEDWorkflowEntry = {
-                    id: generateId(),
-                    fromUserId: user?.id || '',
-                    fromUserName: user?.name || '',
-                    fromRole: 'noc',
-                    toUserId: gedWorkflowRecipient,
-                    toUserName: recipient?.name || '',
-                    toRole: 'superviseur',
-                    action: gedWorkflowAction === 'send' ? 'sent' :
-                            gedWorkflowAction === 'approve' ? 'approved' :
-                            gedWorkflowAction === 'reject' ? 'rejected' : 'suspended',
-                    comment: gedWorkflowComment || '',
-                    timestamp: new Date()
-                  };
-                  const newStatus = gedWorkflowAction === 'approve' ? 'approuve' :
-                                   gedWorkflowAction === 'reject' ? 'rejete' :
-                                   gedWorkflowAction === 'suspend' ? 'suspendu' : gedSelectedDocument.status;
-                  setGedDocuments(prev => prev.map(d => 
-                    d.id === gedSelectedDocument.id 
-                      ? { ...d, status: newStatus, currentHolder: gedWorkflowRecipient, workflowHistory: [...d.workflowHistory, newEntry] }
-                      : d
-                  ));
-                  toast.success('Action effectuée');
-                }
-                setGedWorkflowDialogOpen(false);
-                setGedWorkflowComment('');
-                setGedWorkflowRecipient('');
-              }}>Confirmer</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-        
-        {/* GED Statistics Dialog */}
-        <Dialog open={gedStatsDialogOpen} onOpenChange={setGedStatsDialogOpen}>
-          <DialogContent className="sm:max-w-[700px]">
-            <DialogHeader>
-              <DialogTitle>Statistiques GED</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <Card className="p-3">
-                  <div className="text-sm text-muted-foreground">Total</div>
-                  <div className="text-2xl font-bold">{gedDocuments.length}</div>
-                </Card>
-                <Card className="p-3">
-                  <div className="text-sm text-muted-foreground">En attente</div>
-                  <div className="text-2xl font-bold text-yellow-600">{gedDocuments.filter(d => d.status === 'en_attente').length}</div>
-                </Card>
-                <Card className="p-3">
-                  <div className="text-sm text-muted-foreground">Signés</div>
-                  <div className="text-2xl font-bold text-green-600">{gedDocuments.filter(d => d.status === 'signe').length}</div>
-                </Card>
-                <Card className="p-3">
-                  <div className="text-sm text-muted-foreground">Urgents</div>
-                  <div className="text-2xl font-bold text-red-600">{gedDocuments.filter(d => d.status === 'urgent').length}</div>
-                </Card>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button onClick={() => setGedStatsDialogOpen(false)}>Fermer</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-        
-        {/* GED Import Dialog */}
-        <Dialog open={gedImportDialogOpen} onOpenChange={setGedImportDialogOpen}>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Importer des documents</DialogTitle>
-              <DialogDescription>Téléchargez vos fichiers</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div 
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                  gedImportDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'
-                }`}
-                onDragOver={(e) => { e.preventDefault(); setGedImportDragging(true); }}
-                onDragLeave={() => setGedImportDragging(false)}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  setGedImportDragging(false);
-                  const files = Array.from(e.dataTransfer.files);
-                  setGedImportFiles(prev => [...prev, ...files]);
-                }}
-              >
-                <Upload className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-sm text-muted-foreground">
-                  Glissez-déposez vos fichiers ici
-                </p>
-                <input
-                  type="file"
-                  multiple
-                  accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                  className="hidden"
-                  id="ged-file-input"
-                  onChange={(e) => {
-                    const files = Array.from(e.target.files || []);
-                    setGedImportFiles(prev => [...prev, ...files]);
-                  }}
-                />
-                <Label htmlFor="ged-file-input" className="cursor-pointer mt-2">
-                  <span className="text-primary hover:underline">Parcourir</span>
-                </Label>
-              </div>
-              {gedImportFiles.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Fichiers ({gedImportFiles.length})</p>
-                  <ScrollArea className="h-32">
-                    {gedImportFiles.map((file, i) => (
-                      <div key={i} className="flex justify-between p-2 bg-muted rounded text-sm mb-1">
-                        <span className="truncate">{file.name}</span>
-                        <span className="text-muted-foreground">{(file.size / 1024).toFixed(1)} KB</span>
-                      </div>
-                    ))}
-                  </ScrollArea>
-                </div>
-              )}
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => { setGedImportFiles([]); setGedImportDialogOpen(false); }}>Annuler</Button>
-              <Button onClick={() => {
-                if (gedImportFiles.length > 0 && user) {
-                  gedImportFiles.forEach(file => {
-                    const reader = new FileReader();
-                    reader.onload = () => {
-                      const newDoc: GEDDocument = {
-                        id: `ged-${generateId()}`,
-                        title: file.name,
-                        type: 'autre',
-                        status: 'en_attente',
-                        priority: 'normale',
-                        urgency: 'normale',
-                        fileData: reader.result as string,
-                        fileName: file.name,
-                        fileSize: file.size,
-                        fileType: file.type,
-                        currentHolder: user.id,
-                        workflowStep: 1,
-                        workflowHistory: [],
-                        author: { id: user.id, name: user.name, role: user.role },
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
-                        tags: [],
-                        metadata: {},
-                        passwordProtected: false,
-                        restrictOpen: [],
-                        restrictModify: [],
-                        restrictCapture: false,
-                        restrictPrint: false,
-                        linkedToZoho: false,
-                        version: 1,
-                        versions: [],
-                        comments: [],
-                        isFollowed: true,
-                        lastViewedBy: [user.id]
-                      };
-                      setGedDocuments(prev => [newDoc, ...prev]);
-                    };
-                    reader.readAsDataURL(file);
-                  });
-                  setGedImportFiles([]);
-                  setGedImportDialogOpen(false);
-                  toast.success('Documents importés');
-                }
-              }}>Importer</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-        
-        {/* GED Security Dialog */}
-        <Dialog open={gedSecurityDialogOpen} onOpenChange={setGedSecurityDialogOpen}>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Paramètres de sécurité</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="flex items-center justify-between">
-                <Label>Protection par mot de passe</Label>
-                <Switch
-                  checked={gedSecuritySettings.passwordProtected}
-                  onCheckedChange={(checked) => setGedSecuritySettings(prev => ({ ...prev, passwordProtected: checked }))}
-                />
-              </div>
-              {gedSecuritySettings.passwordProtected && (
-                <div className="space-y-2">
-                  <Label>Mot de passe</Label>
-                  <Input type="password" value={gedSecurityPassword} onChange={(e) => setGedSecurityPassword(e.target.value)} />
-                  <Label>Confirmer</Label>
-                  <Input type="password" value={gedSecurityConfirmPassword} onChange={(e) => setGedSecurityConfirmPassword(e.target.value)} />
-                </div>
-              )}
-              <Separator />
-              <div className="flex items-center justify-between">
-                <Label>Interdire l'impression</Label>
-                <Switch
-                  checked={gedSecuritySettings.restrictPrint}
-                  onCheckedChange={(checked) => setGedSecuritySettings(prev => ({ ...prev, restrictPrint: checked }))}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <Label>Interdire la capture</Label>
-                <Switch
-                  checked={gedSecuritySettings.restrictCapture}
-                  onCheckedChange={(checked) => setGedSecuritySettings(prev => ({ ...prev, restrictCapture: checked }))}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setGedSecurityDialogOpen(false)}>Annuler</Button>
-              <Button onClick={() => {
-                if (gedSelectedDocument) {
-                  setGedDocuments(prev => prev.map(d => 
-                    d.id === gedSelectedDocument.id 
-                      ? { ...d, ...gedSecuritySettings, passwordProtected: gedSecuritySettings.passwordProtected }
-                      : d
-                  ));
-                  toast.success('Paramètres appliqués');
-                }
-                setGedSecurityDialogOpen(false);
-              }}>Appliquer</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-        
-        {/* GED Trash Dialog */}
-        <Dialog open={gedTrashDialogOpen} onOpenChange={setGedTrashDialogOpen}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Corbeille</DialogTitle>
-            </DialogHeader>
-            <div className="py-4">
-              {gedTrashDocuments.length > 0 ? (
-                <ScrollArea className="h-[300px]">
-                  <div className="space-y-2">
-                    {gedTrashDocuments.map(doc => (
-                      <div key={doc.id} className="flex justify-between items-center p-3 bg-muted rounded">
-                        <div>
-                          <p className="font-medium">{doc.title}</p>
-                          <p className="text-xs text-muted-foreground">
-                            Supprimé le {format(doc.updatedAt, 'dd/MM/yyyy HH:mm')}
-                          </p>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => {
-                            setGedDocuments(prev => [doc, ...prev]);
-                            setGedTrashDocuments(prev => prev.filter(d => d.id !== doc.id));
-                            toast.success('Document restauré');
-                          }}>Restaurer</Button>
-                          <Button size="sm" variant="destructive" onClick={() => {
-                            setGedTrashDocuments(prev => prev.filter(d => d.id !== doc.id));
-                            toast.success('Supprimé définitivement');
-                          }}>Supprimer</Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Trash2 className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>La corbeille est vide</p>
-                </div>
-              )}
-            </div>
-            <DialogFooter>
-              <Button onClick={() => setGedTrashDialogOpen(false)}>Fermer</Button>
-            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
