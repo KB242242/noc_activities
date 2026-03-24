@@ -5,23 +5,20 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// ==================== SQLITE CONFIGURATION ====================
-// Uncomment the block below for SQLite (default for development)
+// ==================== MYSQL CONFIGURATION (WampServer) ====================
+// Configuration active pour MySQL
 datasource db {
-  provider = "sqlite"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
-// ==================== MYSQL CONFIGURATION ====================
-// Uncomment the block below for MySQL (WampServer production)
-// Replace the connection string with your MySQL credentials
+// ==================== SQLITE CONFIGURATION ====================
+// Décommentez ce bloc pour utiliser SQLite au lieu de MySQL
 /*
 datasource db {
-  provider = "mysql"
-  url      = "mysql://username:password@localhost:3306/noc_activity"
+  provider = "sqlite"
+  url      = "file:./db/custom.db"
 }
-// Example: mysql://root:@localhost:3306/noc_activity
-// For WampServer default: root with no password
 */
 
 // User model with role-based access
